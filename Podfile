@@ -1,15 +1,7 @@
 # Uncomment the next line to define a global platform for your project
 # platform :ios, '9.0'
 
-target 'ComponentCamera' do
-  # Comment the next line if you don't want to use dynamic frameworks
-  use_frameworks!
-
-  # Pods for ComponentCamera
-
-end
-
-target 'ComponentCameraDemoSwiftUI' do
+target 'CapturerDemoSwiftUI' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
 
@@ -17,7 +9,7 @@ target 'ComponentCameraDemoSwiftUI' do
 
 end
 
-target 'ComponentCameraDemoUIKit' do
+target 'CapturerDemoUIKit' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
 

@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import ComponentCamera
+import Capturer
 
 class ViewModel: ObservableObject {
 

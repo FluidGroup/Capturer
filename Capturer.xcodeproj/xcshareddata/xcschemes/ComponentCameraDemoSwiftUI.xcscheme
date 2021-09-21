@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "4B2D586C25346C730080E958"
-               BuildableName = "ComponentCameraDemoSwiftUI.app"
-               BlueprintName = "ComponentCameraDemoSwiftUI"
-               ReferencedContainer = "container:ComponentCamera.xcodeproj">
+               BuildableName = "CapturerDemoSwiftUI.app"
+               BlueprintName = "CapturerDemoSwiftUI"
+               ReferencedContainer = "container:Capturer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4B2D586C25346C730080E958"
-            BuildableName = "ComponentCameraDemoSwiftUI.app"
-            BlueprintName = "ComponentCameraDemoSwiftUI"
-            ReferencedContainer = "container:ComponentCamera.xcodeproj">
+            BuildableName = "CapturerDemoSwiftUI.app"
+            BlueprintName = "CapturerDemoSwiftUI"
+            ReferencedContainer = "container:Capturer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4B2D586C25346C730080E958"
-            BuildableName = "ComponentCameraDemoSwiftUI.app"
-            BlueprintName = "ComponentCameraDemoSwiftUI"
-            ReferencedContainer = "container:ComponentCamera.xcodeproj">
+            BuildableName = "CapturerDemoSwiftUI.app"
+            BlueprintName = "CapturerDemoSwiftUI"
+            ReferencedContainer = "container:Capturer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

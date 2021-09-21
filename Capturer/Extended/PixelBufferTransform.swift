@@ -1,6 +1,7 @@
 
 import Foundation
 import CoreImage
+import AVFoundation
 
 open class CoreImagePixelBufferTransform: MapOutput<CMSampleBuffer, CVPixelBuffer> {
 

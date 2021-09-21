@@ -1,5 +1,6 @@
 
 import Foundation
+import AVFoundation
 
 open class MapOutput<Upstream, Downstream>: OutputComponentType {
 

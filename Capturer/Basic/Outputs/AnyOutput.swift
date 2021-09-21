@@ -1,5 +1,6 @@
 
 import Foundation
+import AVFoundation
 
 public final class AnyOutput<Downstream>: OutputComponentType {
 

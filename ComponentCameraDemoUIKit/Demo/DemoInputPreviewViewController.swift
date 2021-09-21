@@ -5,7 +5,7 @@
 //  Created by Muukii on 2021/09/21.
 //
 
-import ComponentCamera
+import Capturer
 import Foundation
 import MondrianLayout
 import UIKit
