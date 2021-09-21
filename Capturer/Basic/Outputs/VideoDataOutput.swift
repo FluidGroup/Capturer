@@ -1,7 +1,5 @@
-
-import Foundation
 import AVFoundation
-import MetalKit
+import Foundation
 
 public final class VideoDataOutput: _StatefulObjectBase, OutputComponentType {
 

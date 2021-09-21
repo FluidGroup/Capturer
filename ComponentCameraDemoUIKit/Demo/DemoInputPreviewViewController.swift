@@ -10,7 +10,7 @@ import Foundation
 import MondrianLayout
 import UIKit
 
-@available(iOS 14, *)
+@available(iOS 15, *)
 final class DemoInputPreviewViewController: UIViewController {
 
   let sessionManager = CaptureBody()
@@ -19,11 +19,13 @@ final class DemoInputPreviewViewController: UIViewController {
     super.viewDidLoad()
 
     let output = AnyCVPixelBufferOutput(
-      upstream: VideoDataOutput(),
-      filter: CoreImageFilter.gaussianBlur(amount: 60)
+      upstream: VideoDataOutput()
     )
 
+    let photoOutput = PhotoOutput()
+
     sessionManager.attach(output: output)
+    sessionManager.attach(output: photoOutput)
 
     let previewView = PixelBufferView()
 
@@ -39,6 +41,18 @@ final class DemoInputPreviewViewController: UIViewController {
             UIButton.make(title: "Set input") { [unowned self] in
               let input = CameraInput()
               sessionManager.attach(input: input)
+            }
+
+            UIButton.make(title: "Capture") { [unowned photoOutput] in
+
+              Task {
+                do {
+                  let image = try await photoOutput.capture(with: .init())
+                  print(image)
+                } catch {
+                  print(error)
+                }
+              }
             }
 
           }

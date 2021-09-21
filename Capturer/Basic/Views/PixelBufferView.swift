@@ -15,6 +15,16 @@ public protocol PixelBufferDisplaying: UIView {
 
 public final class PixelBufferView: UIView, PixelBufferDisplaying {
 
+  public override init(frame: CGRect) {
+    super.init(frame: frame)
+
+    layer.contentsGravity = .resizeAspect
+  }
+
+  public required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
   public func input(pixelBuffer: CVPixelBuffer) {
     // TODO: Consider using dispatching
     DispatchQueue.main.async {

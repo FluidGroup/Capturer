@@ -7,7 +7,7 @@ public final class CaptureBody {
   public let session: AVCaptureSession
 
   private var inputComponent: InputComponentType?
-  private var outputComponent: OutputComponentType?
+  private var outputComponents: [OutputComponentType] = []
 
   private let configurationQueue = DispatchQueue(label: "CameraBody")
 
@@ -32,6 +32,10 @@ public final class CaptureBody {
 
   public func attach(input component: InputComponentType) {
 
+    Log.debug(.capture, "Attach input \(component)")
+
+    // TODO: guard attaching multiple inputs
+
     configurationQueue.sync {
       inputComponent = component
 
@@ -43,8 +47,10 @@ public final class CaptureBody {
 
   public func attach(output component: OutputComponentType) {
 
+    Log.debug(.capture, "Attach output \(component)")
+
     configurationQueue.sync {
-      outputComponent = component
+      outputComponents.append(component)
 
       session.performConfiguration {
         component.setUp(sessionInConfiguring: $0)
@@ -67,27 +73,19 @@ public final class CaptureBody {
     }
   }
 
-  public func removeCurrentOutput() {
-
-    guard let currentOutput = outputComponent else {
-      return
-    }
-
-    outputComponent = nil
-
-    configurationQueue.sync {
-      session.performConfiguration {
-        currentOutput.tearDown(sessionInConfiguring: $0)
-      }
-    }
-  }
-
   deinit {
 
     Log.debug(.capture, "\(self) deinitializes")
 
     removeCurrentInput()
-    removeCurrentOutput()
+
+    configurationQueue.sync { 
+      session.performConfiguration { session in
+        outputComponents.forEach { output in
+          output.tearDown(sessionInConfiguring: session)
+        }
+      }
+    }
 
   }
 

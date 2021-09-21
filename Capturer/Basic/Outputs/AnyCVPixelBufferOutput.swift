@@ -12,11 +12,11 @@ public final class AnyCVPixelBufferOutput: _StatefulObjectBase, OutputComponentT
 
   public init<Filter: CVPixelBufferModifying>(
     upstream: VideoDataOutput,
-    filter: Filter?
+    filter: Filter
   ) {
     self.upstream = upstream
 
-    if let filter = filter {
+    if (filter is NoPixelBufferModifier) == false {
       cancellable = upstream.sampleBufferBus.addHandler { [sampleBufferBus] buffer in
         let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
         let new = filter.perform(pixelBuffer: pixelBuffer)
@@ -28,6 +28,12 @@ public final class AnyCVPixelBufferOutput: _StatefulObjectBase, OutputComponentT
         sampleBufferBus.emit(event: pixelBuffer)
       }
     }
+  }
+
+  public convenience init(
+    upstream: VideoDataOutput
+  ) {
+    self.init(upstream: upstream, filter: NoPixelBufferModifier())
   }
 
   deinit {
