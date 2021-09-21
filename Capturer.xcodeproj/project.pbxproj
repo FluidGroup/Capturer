@@ -195,9 +195,7 @@
 				4B3688BC25349F370067C298 /* OutputComponentType.swift */,
 				4B3688BF25349F5B0067C298 /* VideoDataOutput.swift */,
 				4B0ED6C5253ACF300012ADE6 /* AnyOutput.swift */,
-				4B0ED6C1253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift */,
 				4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */,
-				4B0ED6D2253AD9650012ADE6 /* MapOutput.swift */,
 				4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */,
 				4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */,
 			);
@@ -320,6 +318,8 @@
 		4B7EA76426FA04A90016D723 /* Extended */ = {
 			isa = PBXGroup;
 			children = (
+				4B0ED6C1253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift */,
+				4B0ED6D2253AD9650012ADE6 /* MapOutput.swift */,
 				4B0ED6CF253AD8B20012ADE6 /* PixelBufferTransform.swift */,
 				4B0ED6D5253ADBB80012ADE6 /* Filters */,
 			);
