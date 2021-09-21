@@ -9,6 +9,19 @@ public final class PhotoOutput: _StatefulObjectBase, OutputComponentType {
 
   public override init() {
     super.init()
+
+    _output.isHighResolutionCaptureEnabled = true
+  }
+
+  public func makeCaptureSettings() -> AVCapturePhotoSettings {
+
+    let settings = AVCapturePhotoSettings(format: [:])
+
+    /// deprecated from iOS 13
+    settings.isAutoStillImageStabilizationEnabled = true
+    settings.isHighResolutionPhotoEnabled = true
+
+    return settings
   }
 
   public func capture(with settings: AVCapturePhotoSettings, completion: @escaping (Result<AVCapturePhoto, Error>) -> Void) {

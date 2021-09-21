@@ -48,6 +48,8 @@ final class DemoInputPreviewViewController: UIViewController {
               Task {
                 do {
                   let image = try await photoOutput.capture(with: .init())
+                  let cgImage = image.cgImageRepresentation()!
+                  UIImageWriteToSavedPhotosAlbum(UIImage(cgImage: cgImage), nil, nil, nil)
                   print(image)
                 } catch {
                   print(error)

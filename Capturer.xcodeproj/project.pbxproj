@@ -44,6 +44,7 @@
 		4B3D9BE426F9F7540037771E /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE326F9F7540037771E /* Extensions.swift */; };
 		4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */; };
 		4B65D33926FA0E7600DBC163 /* PhotoOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */; };
+		4BBF6FC926FA32290047E633 /* PhotoTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBF6FC826FA32290047E633 /* PhotoTools.swift */; };
 		63ECED500C01AC459FB9283F /* Pods_CapturerDemoUIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAF4397816B68CA79F051BAE /* Pods_CapturerDemoUIKit.framework */; };
 		B0373097F4B04993B1765393 /* Pods_CapturerDemoSwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D0DD43361FDDD43FB6D8A1E /* Pods_CapturerDemoSwiftUI.framework */; };
 /* End PBXBuildFile section */
@@ -131,6 +132,7 @@
 		4B3D9BE326F9F7540037771E /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CVPixelBufferModifying.swift; sourceTree = "<group>"; };
 		4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoOutput.swift; sourceTree = "<group>"; };
+		4BBF6FC826FA32290047E633 /* PhotoTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoTools.swift; sourceTree = "<group>"; };
 		53FE04182317F603CF1BD331 /* Pods-CapturerDemoUIKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoUIKit.debug.xcconfig"; path = "Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit.debug.xcconfig"; sourceTree = "<group>"; };
 		81E305E0D5CEF2969E15D213 /* Pods-ComponentCameraDemoSwiftUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoSwiftUI/Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; sourceTree = "<group>"; };
 		8D276A5D43D7E5CE1BECF749 /* Pods-CapturerDemoUIKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoUIKit.release.xcconfig"; path = "Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit.release.xcconfig"; sourceTree = "<group>"; };
@@ -310,6 +312,7 @@
 				4B1DF69E2534A3E300503E16 /* Views */,
 				4B293EDE2534A13A0057EF46 /* Inputs */,
 				4B293EDC2534A12A0057EF46 /* Outputs */,
+				4BBF6FC826FA32290047E633 /* PhotoTools.swift */,
 			);
 			path = Basic;
 			sourceTree = "<group>";
@@ -575,6 +578,7 @@
 				4B3D9BE026F9DE440037771E /* CameraInput.swift in Sources */,
 				4B0ED6C6253ACF300012ADE6 /* AnyOutput.swift in Sources */,
 				4B3D9BE226F9F4EB0037771E /* Logger.swift in Sources */,
+				4BBF6FC926FA32290047E633 /* PhotoTools.swift in Sources */,
 				4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */,
 				4B65D33926FA0E7600DBC163 /* PhotoOutput.swift in Sources */,
 				4B3688BD25349F370067C298 /* OutputComponentType.swift in Sources */,
