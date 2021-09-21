@@ -21,6 +21,9 @@ target 'ComponentCameraDemoUIKit' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
 
+  pod 'MondrianLayout'
   pod 'Reveal-SDK'
+  pod 'StorybookKit'
+  pod 'StorybookUI'
 
 end
