@@ -43,6 +43,9 @@
 		4B3D9BDA26F9D4A20037771E /* ComponentCamera.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4B2D585D25346C410080E958 /* ComponentCamera.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4B3D9BDE26F9D7D00037771E /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BDD26F9D7D00037771E /* Utils.swift */; };
 		4B3D9BE026F9DE440037771E /* CameraInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BDF26F9DE440037771E /* CameraInput.swift */; };
+		4B3D9BE226F9F4EB0037771E /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE126F9F4EB0037771E /* Logger.swift */; };
+		4B3D9BE426F9F7540037771E /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE326F9F7540037771E /* Extensions.swift */; };
+		4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -125,6 +128,9 @@
 		4B3D9BD626F9D4550037771E /* DemoInputPreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoInputPreviewViewController.swift; sourceTree = "<group>"; };
 		4B3D9BDD26F9D7D00037771E /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		4B3D9BDF26F9DE440037771E /* CameraInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraInput.swift; sourceTree = "<group>"; };
+		4B3D9BE126F9F4EB0037771E /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		4B3D9BE326F9F7540037771E /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CVPixelBufferModifying.swift; sourceTree = "<group>"; };
 		81E305E0D5CEF2969E15D213 /* Pods-ComponentCameraDemoSwiftUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoSwiftUI/Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; sourceTree = "<group>"; };
 		9223848E27EB99AF618FAF0E /* Pods-ComponentCameraDemoUIKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoUIKit.release.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoUIKit/Pods-ComponentCameraDemoUIKit.release.xcconfig"; sourceTree = "<group>"; };
 		9977B67E74AE832C828185E4 /* Pods_ComponentCameraDemoUIKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ComponentCameraDemoUIKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -190,6 +196,7 @@
 				4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */,
 				4B0ED6D2253AD9650012ADE6 /* MapOutput.swift */,
 				4B0ED6CF253AD8B20012ADE6 /* PixelBufferTransform.swift */,
+				4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */,
 			);
 			path = Outputs;
 			sourceTree = "<group>";
@@ -238,6 +245,7 @@
 				4B2D586125346C410080E958 /* Info.plist */,
 				4B0ED6C9253AD0D50012ADE6 /* EventBus.swift */,
 				4B3D9BDD26F9D7D00037771E /* Utils.swift */,
+				4B3D9BE126F9F4EB0037771E /* Logger.swift */,
 			);
 			path = ComponentCamera;
 			sourceTree = "<group>";
@@ -275,6 +283,7 @@
 				4B2D588D25346C900080E958 /* Assets.xcassets */,
 				4B2D588F25346C900080E958 /* LaunchScreen.storyboard */,
 				4B2D589225346C900080E958 /* Info.plist */,
+				4B3D9BE326F9F7540037771E /* Extensions.swift */,
 			);
 			path = ComponentCameraDemoUIKit;
 			sourceTree = "<group>";
@@ -569,6 +578,8 @@
 				4B0ED6C2253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift in Sources */,
 				4B3D9BE026F9DE440037771E /* CameraInput.swift in Sources */,
 				4B0ED6C6253ACF300012ADE6 /* AnyOutput.swift in Sources */,
+				4B3D9BE226F9F4EB0037771E /* Logger.swift in Sources */,
+				4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */,
 				4B3688BD25349F370067C298 /* OutputComponentType.swift in Sources */,
 				4B2D5D78253477480080E958 /* CaptureBody.swift in Sources */,
 				4B3688C025349F5B0067C298 /* VideoDataOutput.swift in Sources */,
@@ -600,6 +611,7 @@
 				4B2D588925346C900080E958 /* ViewController.swift in Sources */,
 				4B2D588525346C900080E958 /* AppDelegate.swift in Sources */,
 				4B2D588725346C900080E958 /* SceneDelegate.swift in Sources */,
+				4B3D9BE426F9F7540037771E /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

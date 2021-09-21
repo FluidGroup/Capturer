@@ -12,19 +12,21 @@ public final class CaptureBody {
   private let configurationQueue = DispatchQueue(label: "CameraBody")
 
   public init() {
-
     session = .init()
-
     assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
-
-    session.startRunning()
   }
 
   public func start() {
+
+    Log.debug(.capture, "Session started")
+
     session.startRunning()
   }
 
   public func stop() {
+
+    Log.debug(.capture, "Session stopped")
+
     session.stopRunning()
   }
 
@@ -81,6 +83,8 @@ public final class CaptureBody {
   }
 
   deinit {
+
+    Log.debug(.capture, "\(self) deinitializes")
 
     removeCurrentInput()
     removeCurrentOutput()

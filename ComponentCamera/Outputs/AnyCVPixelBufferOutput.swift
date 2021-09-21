@@ -9,15 +9,16 @@ public final class AnyCVPixelBufferOutput: _StatefulObjectBase, OutputComponentT
 
   private var cancellable: EventBusCancellable?
 
-  public init(
+  public init<Filter: CVPixelBufferModifying>(
     upstream: VideoDataOutput,
-    filter: CoreImageFilter?
+    filter: Filter?
   ) {
     self.upstream = upstream
 
     if let filter = filter {
       cancellable = upstream.sampleBufferBus.addHandler { [sampleBufferBus] buffer in
-        let new = filter.perform(upstream: buffer)
+        let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
+        let new = filter.perform(pixelBuffer: pixelBuffer)
         sampleBufferBus.emit(event: new)
       }
     } else {

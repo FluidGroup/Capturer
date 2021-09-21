@@ -5,8 +5,8 @@
 //  Created by Muukii on 2021/09/21.
 //
 
-import Foundation
 import ComponentCamera
+import Foundation
 import MondrianLayout
 import UIKit
 
@@ -18,20 +18,16 @@ final class DemoInputPreviewViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    let output = AnyCVPixelBufferOutput(upstream: VideoDataOutput(), filter: CoreImageFilter())
+    let output = AnyCVPixelBufferOutput(
+      upstream: VideoDataOutput(),
+      filter: CoreImageFilter.gaussianBlur(amount: 60)
+    )
 
     sessionManager.attach(output: output)
 
     let previewView = PixelBufferView()
 
-    let setInputButton = UIButton(type: .system, primaryAction: .init { [unowned self] _ in
-
-      let input = CameraInput()
-
-      sessionManager.attach(input: input)
-    })
-
-    setInputButton.setTitle("Set input", for: .normal)
+    sessionManager.start()
 
     view.mondrian.buildSubviews {
       LayoutContainer(attachedSafeAreaEdges: .all) {
@@ -39,7 +35,12 @@ final class DemoInputPreviewViewController: UIViewController {
           previewView
 
           HStackBlock {
-            setInputButton
+
+            UIButton.make(title: "Set input") { [unowned self] in
+              let input = CameraInput()
+              sessionManager.attach(input: input)
+            }
+
           }
         }
       }
