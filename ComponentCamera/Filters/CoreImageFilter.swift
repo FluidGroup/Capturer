@@ -1,9 +1,3 @@
-//
-//  CoreImageFilter.swift
-//  ComponentCamera
-//
-//  Created by muukii on 2020/10/17.
-//
 
 import Foundation
 import CoreImage

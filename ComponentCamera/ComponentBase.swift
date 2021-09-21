@@ -1,9 +1,3 @@
-//
-//  ComponentBase.swift
-//  ComponentCamera
-//
-//  Created by muukii on 2020/10/12.
-//
 
 import Foundation
 

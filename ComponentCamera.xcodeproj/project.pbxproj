@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 51;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -38,10 +38,21 @@
 		4B3688C325349F770067C298 /* ComponentBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3688C225349F770067C298 /* ComponentBase.swift */; };
 		4B3D9BD326F9D2480037771E /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BD226F9D2480037771E /* Book.swift */; };
 		4B3D9BD526F9D25E0037771E /* RootContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BD426F9D25E0037771E /* RootContainerViewController.swift */; };
+		4B3D9BD726F9D4550037771E /* DemoInputPreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BD626F9D4550037771E /* DemoInputPreviewViewController.swift */; };
+		4B3D9BD926F9D4A20037771E /* ComponentCamera.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B2D585D25346C410080E958 /* ComponentCamera.framework */; platformFilter = ios; };
+		4B3D9BDA26F9D4A20037771E /* ComponentCamera.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4B2D585D25346C410080E958 /* ComponentCamera.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4B3D9BDE26F9D7D00037771E /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BDD26F9D7D00037771E /* Utils.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		4B2D5D8425347B7C0080E958 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B2D585425346C400080E958 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B2D585C25346C410080E958;
+			remoteInfo = ComponentCamera;
+		};
+		4B3D9BDB26F9D4A20037771E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4B2D585425346C400080E958 /* Project object */;
 			proxyType = 1;
@@ -57,6 +68,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				4B3D9BDA26F9D4A20037771E /* ComponentCamera.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -109,6 +121,8 @@
 		4B3688C225349F770067C298 /* ComponentBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentBase.swift; sourceTree = "<group>"; };
 		4B3D9BD226F9D2480037771E /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
 		4B3D9BD426F9D25E0037771E /* RootContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootContainerViewController.swift; sourceTree = "<group>"; };
+		4B3D9BD626F9D4550037771E /* DemoInputPreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoInputPreviewViewController.swift; sourceTree = "<group>"; };
+		4B3D9BDD26F9D7D00037771E /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		81E305E0D5CEF2969E15D213 /* Pods-ComponentCameraDemoSwiftUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoSwiftUI/Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; sourceTree = "<group>"; };
 		9223848E27EB99AF618FAF0E /* Pods-ComponentCameraDemoUIKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoUIKit.release.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoUIKit/Pods-ComponentCameraDemoUIKit.release.xcconfig"; sourceTree = "<group>"; };
 		9977B67E74AE832C828185E4 /* Pods_ComponentCameraDemoUIKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ComponentCameraDemoUIKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -141,6 +155,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0A1477F6A6C6C41595FA8DFF /* Pods_ComponentCameraDemoUIKit.framework in Frameworks */,
+				4B3D9BD926F9D4A20037771E /* ComponentCamera.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -219,6 +234,7 @@
 				4B3688C225349F770067C298 /* ComponentBase.swift */,
 				4B2D586125346C410080E958 /* Info.plist */,
 				4B0ED6C9253AD0D50012ADE6 /* EventBus.swift */,
+				4B3D9BDD26F9D7D00037771E /* Utils.swift */,
 			);
 			path = ComponentCamera;
 			sourceTree = "<group>";
@@ -247,6 +263,7 @@
 		4B2D588325346C900080E958 /* ComponentCameraDemoUIKit */ = {
 			isa = PBXGroup;
 			children = (
+				4B3D9BD826F9D4590037771E /* Demo */,
 				4B2D588425346C900080E958 /* AppDelegate.swift */,
 				4B2D588625346C900080E958 /* SceneDelegate.swift */,
 				4B3D9BD226F9D2480037771E /* Book.swift */,
@@ -267,6 +284,14 @@
 				9977B67E74AE832C828185E4 /* Pods_ComponentCameraDemoUIKit.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4B3D9BD826F9D4590037771E /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				4B3D9BD626F9D4550037771E /* DemoInputPreviewViewController.swift */,
+			);
+			path = Demo;
 			sourceTree = "<group>";
 		};
 		6C347E79C8C03ED8245E34C5 /* Pods */ = {
@@ -350,6 +375,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4B3D9BDC26F9D4A20037771E /* PBXTargetDependency */,
 			);
 			name = ComponentCameraDemoUIKit;
 			productName = ComponentCameraDemoUIKit;
@@ -536,6 +562,7 @@
 				4B3688C325349F770067C298 /* ComponentBase.swift in Sources */,
 				4B0ED6D0253AD8B20012ADE6 /* PixelBufferTransform.swift in Sources */,
 				4B293EE02534A14B0057EF46 /* InputComponentType.swift in Sources */,
+				4B3D9BDE26F9D7D00037771E /* Utils.swift in Sources */,
 				4B0ED6C2253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift in Sources */,
 				4B0ED6C6253ACF300012ADE6 /* AnyOutput.swift in Sources */,
 				4B3688BD25349F370067C298 /* OutputComponentType.swift in Sources */,
@@ -564,6 +591,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B3D9BD526F9D25E0037771E /* RootContainerViewController.swift in Sources */,
+				4B3D9BD726F9D4550037771E /* DemoInputPreviewViewController.swift in Sources */,
 				4B3D9BD326F9D2480037771E /* Book.swift in Sources */,
 				4B2D588925346C900080E958 /* ViewController.swift in Sources */,
 				4B2D588525346C900080E958 /* AppDelegate.swift in Sources */,
@@ -578,6 +606,12 @@
 			isa = PBXTargetDependency;
 			target = 4B2D585C25346C410080E958 /* ComponentCamera */;
 			targetProxy = 4B2D5D8425347B7C0080E958 /* PBXContainerItemProxy */;
+		};
+		4B3D9BDC26F9D4A20037771E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = 4B2D585C25346C410080E958 /* ComponentCamera */;
+			targetProxy = 4B3D9BDB26F9D4A20037771E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -847,7 +881,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.muukii.ComponentCameraDemoUIKit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -872,7 +906,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.muukii.ComponentCameraDemoUIKit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

@@ -1,5 +1,9 @@
 import StorybookKit
 
 let book = Book(title: "MyBook") {
-  BookText("Hello, MyBook")
+  BookSection(title: "Basics") {
+    BookPush(title: "Preview") {
+      DemoInputPreviewViewController()
+    }
+  }
 }

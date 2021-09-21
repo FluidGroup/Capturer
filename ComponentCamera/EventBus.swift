@@ -1,15 +1,9 @@
-//
-//  Multicaster.swift
-//  ComponentCamera
-//
-//  Created by muukii on 2020/10/17.
-//
 
 import Foundation
 
-public final class MulticastCancellable: Hashable {
+public final class EventBusCancellable: Hashable {
 
-  public static func == (lhs: MulticastCancellable, rhs: MulticastCancellable) -> Bool {
+  public static func == (lhs: EventBusCancellable, rhs: EventBusCancellable) -> Bool {
     lhs === rhs
   }
 
@@ -17,17 +11,32 @@ public final class MulticastCancellable: Hashable {
     ObjectIdentifier(self).hash(into: &hasher)
   }
 
-  private let _onCancel: (MulticastCancellable) -> Void
+  private var isAutoCancelEnabled: Bool = false
 
-  init(onCancel: @escaping (MulticastCancellable) -> Void) {
+  private let _onCancel: (EventBusCancellable) -> Void
+
+  init(onCancel: @escaping (EventBusCancellable) -> Void) {
     self._onCancel = onCancel
   }
 
   public func cancel() {
     _onCancel(self)
   }
+
+  /// Enables auto cancellation on deinitialization.
+  /// [non-atomic]
+  public func enableAutoCancel() {
+    isAutoCancelEnabled = true
+  }
+
+  deinit {
+    if isAutoCancelEnabled {
+      cancel()
+    }
+  }
 }
 
+/// [non-atomic]
 public final class EventBus<Event> {
 
   public typealias Handler = (Event) -> Void
@@ -36,10 +45,10 @@ public final class EventBus<Event> {
 
   }
 
-  var targets: ContiguousArray<(MulticastCancellable, Handler)> = .init()
+  var targets: ContiguousArray<(EventBusCancellable, Handler)> = .init()
 
-  public func addHandler(_ handler: @escaping Handler) -> MulticastCancellable {
-    let cancellable = MulticastCancellable { [weak self] cancellable in
+  public func addHandler(_ handler: @escaping Handler) -> EventBusCancellable {
+    let cancellable = EventBusCancellable { [weak self] cancellable in
       guard let self = self else { return }
       self.targets.removeAll { $0.0 == cancellable }
     }

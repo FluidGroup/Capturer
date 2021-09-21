@@ -21,7 +21,7 @@ public final class CameraBody {
 
     session = .init()
 
-//    session.sessionPreset = .high
+    assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
 
     let discoverySession = AVCaptureDevice.DiscoverySession(
       deviceTypes: [

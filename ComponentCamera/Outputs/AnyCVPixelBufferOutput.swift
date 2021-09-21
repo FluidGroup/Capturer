@@ -1,9 +1,3 @@
-//
-//  AnyCVPixelBufferOutput.swift
-//  ComponentCamera
-//
-//  Created by muukii on 2020/10/17.
-//
 
 import Foundation
 
@@ -13,7 +7,7 @@ public final class AnyCVPixelBufferOutput: _StatefulObjectBase, OutputComponentT
 
   private let upstream: VideoDataOutput
 
-  private var cancellable: MulticastCancellable?
+  private var cancellable: EventBusCancellable?
 
   public init(
     upstream: VideoDataOutput,

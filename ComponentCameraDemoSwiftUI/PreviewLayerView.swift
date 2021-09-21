@@ -59,7 +59,7 @@ struct CustomPixelBufferView<View: PixelBufferDisplaying>: UIViewRepresentable {
 
   final class Coordinator {
     let output: Output
-    var cancellable: MulticastCancellable?
+    var cancellable: EventBusCancellable?
 
     init(output: Output) {
       self.output = output
