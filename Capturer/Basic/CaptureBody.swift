@@ -14,6 +14,10 @@ public final class CaptureBody {
   public init() {
     session = .init()
     assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
+
+    session.performConfiguration {
+      $0.sessionPreset = .photo
+    }
   }
 
   public func start() {

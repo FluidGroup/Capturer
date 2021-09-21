@@ -14,7 +14,9 @@ public final class CameraInput: _StatefulObjectBase, InputComponentType {
       position: .back
     )
 
-    let input = try! AVCaptureDeviceInput(device: discoverySession.devices.first!)
+    let device = discoverySession.devices.first!
+
+    let input = try! AVCaptureDeviceInput(device: device)
 
     self.captureDeviceInput = input
 
