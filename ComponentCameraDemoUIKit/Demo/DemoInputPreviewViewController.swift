@@ -10,9 +10,10 @@ import ComponentCamera
 import MondrianLayout
 import UIKit
 
+@available(iOS 14, *)
 final class DemoInputPreviewViewController: UIViewController {
 
-  let sessionManager = CameraBody()
+  let sessionManager = CaptureBody()
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -23,10 +24,23 @@ final class DemoInputPreviewViewController: UIViewController {
 
     let previewView = PixelBufferView()
 
+    let setInputButton = UIButton(type: .system, primaryAction: .init { [unowned self] _ in
+
+      let input = CameraInput()
+
+      sessionManager.attach(input: input)
+    })
+
+    setInputButton.setTitle("Set input", for: .normal)
+
     view.mondrian.buildSubviews {
       LayoutContainer(attachedSafeAreaEdges: .all) {
         VStackBlock(alignment: .fill) {
           previewView
+
+          HStackBlock {
+            setInputButton
+          }
         }
       }
     }

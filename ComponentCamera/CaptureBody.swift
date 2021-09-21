@@ -1,14 +1,8 @@
-//
-//  Tmp.swift
-//  ComponentCamera
-//
-//  Created by muukii on 2020/10/12.
-//
 
 import Foundation
 import AVFoundation
 
-public final class CameraBody {
+public final class CaptureBody {
 
   public let session: AVCaptureSession
 
@@ -22,20 +16,6 @@ public final class CameraBody {
     session = .init()
 
     assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
-
-    let discoverySession = AVCaptureDevice.DiscoverySession(
-      deviceTypes: [
-        .builtInWideAngleCamera,
-      ], mediaType: .video,
-      position: .back
-    )
-
-    let input = try! AVCaptureDeviceInput(device: discoverySession.devices.first!)
-
-    session.performConfiguration {
-      $0.sessionPreset = .high
-      $0.addInput(input)
-    }
 
     session.startRunning()
   }
@@ -70,11 +50,49 @@ public final class CameraBody {
     }
   }
 
+  public func removeCurrentInput() {
+
+    guard let currentInput = inputComponent else {
+      return
+    }
+
+    inputComponent = nil
+
+    configurationQueue.sync {
+      session.performConfiguration {
+        currentInput.tearDown(sessionInConfiguring: $0)
+      }
+    }
+  }
+
+  public func removeCurrentOutput() {
+
+    guard let currentOutput = outputComponent else {
+      return
+    }
+
+    outputComponent = nil
+
+    configurationQueue.sync {
+      session.performConfiguration {
+        currentOutput.tearDown(sessionInConfiguring: $0)
+      }
+    }
+  }
+
+  deinit {
+
+    removeCurrentInput()
+    removeCurrentOutput()
+
+  }
+
 }
 
 
 extension AVCaptureSession {
 
+  @inline(__always)
   func performConfiguration(_ perform: (AVCaptureSession) -> Void) {
     beginConfiguration()
     defer {

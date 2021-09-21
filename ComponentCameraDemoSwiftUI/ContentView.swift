@@ -10,7 +10,7 @@ import ComponentCamera
 
 class ViewModel: ObservableObject {
 
-  let sessionManager = CameraBody()
+  let sessionManager = CaptureBody()
   let output: AnyCVPixelBufferOutput
 
   init() {

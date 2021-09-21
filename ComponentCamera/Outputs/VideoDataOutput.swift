@@ -15,6 +15,8 @@ public final class VideoDataOutput: _StatefulObjectBase, OutputComponentType {
 
   public let sampleBufferBus: EventBus<CMSampleBuffer> = .init()
 
+  private var observation: NSKeyValueObservation?
+
   public override init() {
 
     let queue = DispatchQueue(label: "VideoDataOutputComponent")
@@ -24,13 +26,22 @@ public final class VideoDataOutput: _StatefulObjectBase, OutputComponentType {
     delegateProxy.handlers.didOutput = { [sampleBufferBus] sampleBuffer in
       sampleBufferBus.emit(event: sampleBuffer)
     }
+
+    observation = _output.observe(\.connections, options: [.initial, .new]) { output, changes in
+      print(output.connections)
+
+      // TODO: handles connections with better way
+      if let firstConnection = output.connections.first {
+        firstConnection.videoOrientation = .portrait
+      } else {
+
+      }
+
+    }
   }
 
   public func setUp(sessionInConfiguring: AVCaptureSession) {
     sessionInConfiguring.addOutput(_output)
-    // TODO: handles connections with better way
-    assert(_output.connections.count == 1)
-    _output.connections.first?.videoOrientation = .portrait
   }
 
   public func tearDown(sessionInConfiguring: AVCaptureSession) {

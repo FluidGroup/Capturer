@@ -2,8 +2,10 @@ import StorybookKit
 
 let book = Book(title: "MyBook") {
   BookSection(title: "Basics") {
-    BookPush(title: "Preview") {
-      DemoInputPreviewViewController()
+    if #available(iOS 14, *) {
+      BookPush(title: "Preview") {
+        DemoInputPreviewViewController()
+      }
     }
   }
 }
