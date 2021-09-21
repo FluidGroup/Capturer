@@ -2,12 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:/Users/muukii/.ghq/github.com/muukii/ComponentCamera/Capturer.xcodeproj">
+      location = "group:Capturer.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Pods/Pods.xcodeproj">
-   </FileRef>
-   <FileRef
-      location = "group:Capturer.xcodeproj">
    </FileRef>
 </Workspace>
