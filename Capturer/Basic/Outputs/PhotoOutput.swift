@@ -3,9 +3,27 @@ import UIKit
 
 public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
+  public struct CapturePhoto {
+
+    public let photo: AVCapturePhoto
+    public let preferredOrientation: Orientation
+
+    /**
+     Creates an image from captured data with current device orientation.
+     */
+    public func makeOrientationFixedImage() -> UIImage {
+      .init(
+        cgImage: photo.cgImageRepresentation()!,
+        scale: 1,
+        orientation: preferredOrientation.uiImageOrientation
+      )
+    }
+
+  }
+
   private let _output = AVCapturePhotoOutput()
 
-  //  private let delegateProxy = _AVCaptureVideoDataOutputSampleBufferDelegateProxy()
+  public let orientationManager = OrientationManager()
 
   public override init() {
     super.init()
@@ -24,16 +42,18 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
     return settings
   }
 
-  public func capture(with settings: AVCapturePhotoSettings, completion: @escaping (Result<AVCapturePhoto, Error>) -> Void) {
+  public func capture(with settings: AVCapturePhotoSettings, completion: @escaping (Result<CapturePhoto, Error>) -> Void) {
 
-    var completionWrapper: ((Result<AVCapturePhoto, Error>) -> Void)!
+    var completionWrapper: ((Result<CapturePhoto, Error>) -> Void)!
+
+    let orientation = orientationManager.state.orientation
 
     let proxy = _AVCapturePhotoCaptureDelegateProxy { photo, error in
       if let error = error {
         completionWrapper(.failure(error))
         return
       }
-      completionWrapper(.success(photo))
+      completionWrapper(.success(.init(photo: photo, preferredOrientation: orientation)))
     }
 
     completionWrapper = {
@@ -46,7 +66,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   }
 
   @available(iOS 15.0.0, *)
-  public func capture(with settings: AVCapturePhotoSettings) async throws -> AVCapturePhoto {
+  public func capture(with settings: AVCapturePhotoSettings) async throws -> CapturePhoto {
     try await withCheckedThrowingContinuation { continuation in
       capture(with: settings) { result in
         continuation.resume(with: result)
@@ -69,10 +89,12 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   //  }
 
   public func setUp(sessionInConfiguring: AVCaptureSession) {
+    orientationManager.start()
     sessionInConfiguring.addOutput(_output)
   }
 
   public func tearDown(sessionInConfiguring: AVCaptureSession) {
+    orientationManager.stop()
     sessionInConfiguring.removeOutput(_output)
   }
 

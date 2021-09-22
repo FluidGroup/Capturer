@@ -2,44 +2,48 @@ import CoreMotion
 import UIKit
 import AVFoundation
 
+public struct Orientation: Equatable {
+
+  public let deviceOrientation: UIDeviceOrientation
+
+  public var cgImageOrientation: CGImagePropertyOrientation {
+    deviceOrientation.toImageOrientation()
+  }
+
+  public var uiImageOrientation: UIImage.Orientation {
+    return .init(deviceOrientation.toImageOrientation())
+  }
+
+  public var cgImageOrientationMirrored: CGImagePropertyOrientation {
+    deviceOrientation.toImageOrientation().mirrored
+  }
+
+  public var uiImageOrientationMirrored: UIImage.Orientation {
+    return .init(cgImageOrientationMirrored)
+  }
+
+}
+
 public final class OrientationManager {
 
   public struct State: Equatable {
-    public var orientation: UIDeviceOrientation = .portrait
-
-    public var cgImageOrientation: CGImagePropertyOrientation {
-      orientation.toImageOrientation()
-    }
-
-    public var uiImageOrientation: UIImage.Orientation {
-      return .init(orientation.toImageOrientation())
-    }
-
-    public var cgImageOrientationMirrored: CGImagePropertyOrientation {
-      orientation.toImageOrientation().mirrored
-    }
-
-    public var uiImageOrientationMirrored: UIImage.Orientation {
-      return .init(cgImageOrientationMirrored)
-    }
+    public var orientation: Orientation = .init(deviceOrientation: .portrait)
   }
 
   public private(set) var state: State = .init() {
     didSet {
-      Log.debug(.orientation, "State changed : \(state.cgImageOrientation.rawValue)")
+      Log.debug(.orientation, "State changed : \(state.orientation.cgImageOrientation.rawValue)")
     }
   }
 
-  public static let shared = OrientationManager()
-
   private let manager = CMMotionManager()
 
-  private init() {
+  public init() {
 
     manager.accelerometerUpdateInterval = 0.3
 
     if let initialData = manager.accelerometerData {
-      state.orientation = initialData.toDeviceOrientation()
+      state.orientation = .init(deviceOrientation: initialData.toDeviceOrientation())
     }
 
   }
@@ -50,7 +54,7 @@ public final class OrientationManager {
         return
       }
 
-      let newData = data.toDeviceOrientation()
+      let newData = Orientation(deviceOrientation: data.toDeviceOrientation())
       if self.state.orientation != newData {
         self.state.orientation = newData
       }
