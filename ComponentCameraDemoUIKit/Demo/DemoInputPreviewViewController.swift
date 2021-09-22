@@ -62,9 +62,7 @@ final class DemoInputPreviewViewController: UIViewController {
       }
     }
 
-    output.sampleBufferBus.addHandler { pixelBuffer in
-      previewView.input(pixelBuffer: pixelBuffer)
-    }
+    previewView.attach(output: output)
 
   }
 

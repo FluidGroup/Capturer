@@ -3,16 +3,6 @@ import Foundation
 import UIKit
 import AVFoundation
 
-/**
- A protocol indicates that itself can display ``CoreVideo.CVPixelBuffer``
- */
-public protocol PixelBufferDisplaying: UIView {
-
-  func input(pixelBuffer: CVPixelBuffer)
-
-  init()
-}
-
 public final class PixelBufferView: UIView, PixelBufferDisplaying {
 
   public override init(frame: CGRect) {
@@ -20,6 +10,8 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
 
     layer.contentsGravity = .resizeAspect
   }
+
+  private var subscription: EventBusCancellable?
 
   public required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
@@ -35,16 +27,23 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
     }
   }
 
-}
+  @MainActor
+  public func attach<Output: PixelBufferOutputNodeType>(output: Output) {
 
+    assert(Thread.isMainThread)
 
-public final class CoreImagePixelBufferView: UIImageView, PixelBufferDisplaying {
+    subscription?.cancel()
 
-  public func input(pixelBuffer: CVPixelBuffer) {
-    // TODO: Consider using dispatching
-    DispatchQueue.main.async {
-      let image = CIImage(cvPixelBuffer: pixelBuffer, options: [:])
-      self.image = UIImage.init(ciImage: image, scale: 1, orientation: .right)
+    subscription = output
+      .pixelBufferBus
+      .addHandler { [unowned self] pixelBuffer in
+        self.input(pixelBuffer: pixelBuffer)
     }
   }
+
+  deinit {
+    subscription?.cancel()
+  }
+
 }
+

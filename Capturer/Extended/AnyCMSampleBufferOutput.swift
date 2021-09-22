@@ -2,7 +2,7 @@
 import Foundation
 import AVFoundation
 
-public final class AnyCMSampleBufferOutput: _StatefulObjectBase, OutputComponentType {
+public final class AnyCMSampleBufferOutput: _StatefulObjectBase, OutputNodeType {
 
   public var sampleBufferBus: EventBus<CMSampleBuffer> {
     backing.sampleBufferBus

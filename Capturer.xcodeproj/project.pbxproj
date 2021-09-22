@@ -15,7 +15,7 @@
 		4B0ED6DD253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */; };
 		4B0ED6E0253AE2670012ADE6 /* CoreImageFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6DF253AE2670012ADE6 /* CoreImageFilter.swift */; };
 		4B1DF6A02534A40300503E16 /* PixelBufferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1DF69F2534A40300503E16 /* PixelBufferView.swift */; };
-		4B293EE02534A14B0057EF46 /* InputComponentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B293EDF2534A14B0057EF46 /* InputComponentType.swift */; };
+		4B293EE02534A14B0057EF46 /* InputNodeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B293EDF2534A14B0057EF46 /* InputNodeType.swift */; };
 		4B2D586225346C410080E958 /* ComponentCamera.h in Headers */ = {isa = PBXBuildFile; fileRef = 4B2D586025346C410080E958 /* ComponentCamera.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4B2D587025346C730080E958 /* ComponentCameraDemoSwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2D586F25346C730080E958 /* ComponentCameraDemoSwiftUIApp.swift */; };
 		4B2D587225346C730080E958 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2D587125346C730080E958 /* ContentView.swift */; };
@@ -30,7 +30,7 @@
 		4B2D5D7D25347B090080E958 /* PreviewLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2D5D7C25347B090080E958 /* PreviewLayerView.swift */; };
 		4B2D5D8225347B7C0080E958 /* Capturer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B2D585D25346C410080E958 /* Capturer.framework */; };
 		4B2D5D8325347B7C0080E958 /* Capturer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4B2D585D25346C410080E958 /* Capturer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		4B3688BD25349F370067C298 /* OutputComponentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3688BC25349F370067C298 /* OutputComponentType.swift */; };
+		4B3688BD25349F370067C298 /* OutputNodeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3688BC25349F370067C298 /* OutputNodeType.swift */; };
 		4B3688C025349F5B0067C298 /* VideoDataOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3688BF25349F5B0067C298 /* VideoDataOutput.swift */; };
 		4B3688C325349F770067C298 /* ComponentBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3688C225349F770067C298 /* ComponentBase.swift */; };
 		4B3D9BD326F9D2480037771E /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BD226F9D2480037771E /* Book.swift */; };
@@ -44,6 +44,8 @@
 		4B3D9BE426F9F7540037771E /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE326F9F7540037771E /* Extensions.swift */; };
 		4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */; };
 		4B65D33926FA0E7600DBC163 /* PhotoOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */; };
+		4B9077CD26FB0C43008BF843 /* PixelBufferDisplaying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */; };
+		4B9077CF26FB0C5F008BF843 /* CoreImagePixelBufferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */; };
 		4BBF6FC926FA32290047E633 /* PhotoTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBF6FC826FA32290047E633 /* PhotoTools.swift */; };
 		63ECED500C01AC459FB9283F /* Pods_CapturerDemoUIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAF4397816B68CA79F051BAE /* Pods_CapturerDemoUIKit.framework */; };
 		B0373097F4B04993B1765393 /* Pods_CapturerDemoSwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D0DD43361FDDD43FB6D8A1E /* Pods_CapturerDemoSwiftUI.framework */; };
@@ -101,7 +103,7 @@
 		4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCVPixelBufferOutput.swift; sourceTree = "<group>"; };
 		4B0ED6DF253AE2670012ADE6 /* CoreImageFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageFilter.swift; sourceTree = "<group>"; };
 		4B1DF69F2534A40300503E16 /* PixelBufferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBufferView.swift; sourceTree = "<group>"; };
-		4B293EDF2534A14B0057EF46 /* InputComponentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputComponentType.swift; sourceTree = "<group>"; };
+		4B293EDF2534A14B0057EF46 /* InputNodeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNodeType.swift; sourceTree = "<group>"; };
 		4B2D585D25346C410080E958 /* Capturer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Capturer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B2D586025346C410080E958 /* ComponentCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ComponentCamera.h; sourceTree = "<group>"; };
 		4B2D586125346C410080E958 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -120,7 +122,7 @@
 		4B2D589225346C900080E958 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4B2D5D77253477480080E958 /* CaptureBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureBody.swift; sourceTree = "<group>"; };
 		4B2D5D7C25347B090080E958 /* PreviewLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewLayerView.swift; sourceTree = "<group>"; };
-		4B3688BC25349F370067C298 /* OutputComponentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputComponentType.swift; sourceTree = "<group>"; };
+		4B3688BC25349F370067C298 /* OutputNodeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputNodeType.swift; sourceTree = "<group>"; };
 		4B3688BF25349F5B0067C298 /* VideoDataOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoDataOutput.swift; sourceTree = "<group>"; };
 		4B3688C225349F770067C298 /* ComponentBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentBase.swift; sourceTree = "<group>"; };
 		4B3D9BD226F9D2480037771E /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
@@ -132,6 +134,8 @@
 		4B3D9BE326F9F7540037771E /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CVPixelBufferModifying.swift; sourceTree = "<group>"; };
 		4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoOutput.swift; sourceTree = "<group>"; };
+		4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBufferDisplaying.swift; sourceTree = "<group>"; };
+		4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImagePixelBufferView.swift; sourceTree = "<group>"; };
 		4BBF6FC826FA32290047E633 /* PhotoTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoTools.swift; sourceTree = "<group>"; };
 		53FE04182317F603CF1BD331 /* Pods-CapturerDemoUIKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoUIKit.debug.xcconfig"; path = "Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit.debug.xcconfig"; sourceTree = "<group>"; };
 		81E305E0D5CEF2969E15D213 /* Pods-ComponentCameraDemoSwiftUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoSwiftUI/Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; sourceTree = "<group>"; };
@@ -184,6 +188,7 @@
 		4B1DF69E2534A3E300503E16 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */,
 				4B1DF69F2534A40300503E16 /* PixelBufferView.swift */,
 			);
 			path = Views;
@@ -192,7 +197,7 @@
 		4B293EDC2534A12A0057EF46 /* Outputs */ = {
 			isa = PBXGroup;
 			children = (
-				4B3688BC25349F370067C298 /* OutputComponentType.swift */,
+				4B3688BC25349F370067C298 /* OutputNodeType.swift */,
 				4B3688BF25349F5B0067C298 /* VideoDataOutput.swift */,
 				4B0ED6C5253ACF300012ADE6 /* AnyOutput.swift */,
 				4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */,
@@ -205,7 +210,7 @@
 		4B293EDE2534A13A0057EF46 /* Inputs */ = {
 			isa = PBXGroup;
 			children = (
-				4B293EDF2534A14B0057EF46 /* InputComponentType.swift */,
+				4B293EDF2534A14B0057EF46 /* InputNodeType.swift */,
 				4B3D9BDF26F9DE440037771E /* CameraInput.swift */,
 			);
 			path = Inputs;
@@ -318,6 +323,7 @@
 		4B7EA76426FA04A90016D723 /* Extended */ = {
 			isa = PBXGroup;
 			children = (
+				4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */,
 				4B0ED6C1253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift */,
 				4B0ED6D2253AD9650012ADE6 /* MapOutput.swift */,
 				4B0ED6CF253AD8B20012ADE6 /* PixelBufferTransform.swift */,
@@ -572,7 +578,7 @@
 			files = (
 				4B3688C325349F770067C298 /* ComponentBase.swift in Sources */,
 				4B0ED6D0253AD8B20012ADE6 /* PixelBufferTransform.swift in Sources */,
-				4B293EE02534A14B0057EF46 /* InputComponentType.swift in Sources */,
+				4B293EE02534A14B0057EF46 /* InputNodeType.swift in Sources */,
 				4B3D9BDE26F9D7D00037771E /* Utils.swift in Sources */,
 				4B0ED6C2253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift in Sources */,
 				4B3D9BE026F9DE440037771E /* CameraInput.swift in Sources */,
@@ -580,8 +586,9 @@
 				4B3D9BE226F9F4EB0037771E /* Logger.swift in Sources */,
 				4BBF6FC926FA32290047E633 /* PhotoTools.swift in Sources */,
 				4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */,
+				4B9077CD26FB0C43008BF843 /* PixelBufferDisplaying.swift in Sources */,
 				4B65D33926FA0E7600DBC163 /* PhotoOutput.swift in Sources */,
-				4B3688BD25349F370067C298 /* OutputComponentType.swift in Sources */,
+				4B3688BD25349F370067C298 /* OutputNodeType.swift in Sources */,
 				4B2D5D78253477480080E958 /* CaptureBody.swift in Sources */,
 				4B3688C025349F5B0067C298 /* VideoDataOutput.swift in Sources */,
 				4B0ED6CA253AD0D50012ADE6 /* EventBus.swift in Sources */,
@@ -589,6 +596,7 @@
 				4B0ED6D3253AD9650012ADE6 /* MapOutput.swift in Sources */,
 				4B0ED6E0253AE2670012ADE6 /* CoreImageFilter.swift in Sources */,
 				4B1DF6A02534A40300503E16 /* PixelBufferView.swift in Sources */,
+				4B9077CF26FB0C5F008BF843 /* CoreImagePixelBufferView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

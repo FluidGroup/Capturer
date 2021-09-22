@@ -1,4 +1,6 @@
 import Foundation
+import CoreMedia
+import AVFoundation
 
 enum Utils {
 
@@ -6,4 +8,12 @@ enum Utils {
     Bundle.main.object(forInfoDictionaryKey: "NSCameraUsageDescription") != nil
   }
 
+}
+
+extension CMSampleBuffer {
+
+  @inline(__always)
+  public func takeCVPixelBuffer() -> CVPixelBuffer? {
+    CMSampleBufferGetImageBuffer(self)
+  }
 }

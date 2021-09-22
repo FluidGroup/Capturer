@@ -2,9 +2,9 @@
 import Foundation
 import AVFoundation
 
-public final class AnyCVPixelBufferOutput: _StatefulObjectBase, OutputComponentType {
+public final class AnyCVPixelBufferOutput: _StatefulObjectBase, PixelBufferOutputNodeType {
 
-  public let sampleBufferBus: EventBus<CVPixelBuffer> = .init()
+  public let pixelBufferBus: EventBus<CVPixelBuffer> = .init()
 
   private let upstream: VideoDataOutput
 
@@ -17,15 +17,15 @@ public final class AnyCVPixelBufferOutput: _StatefulObjectBase, OutputComponentT
     self.upstream = upstream
 
     if (filter is NoPixelBufferModifier) == false {
-      cancellable = upstream.sampleBufferBus.addHandler { [sampleBufferBus] buffer in
+      cancellable = upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
         let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
         let new = filter.perform(pixelBuffer: pixelBuffer)
-        sampleBufferBus.emit(event: new)
+        pixelBufferBus.emit(element: new)
       }
     } else {
-      cancellable = upstream.sampleBufferBus.addHandler { [sampleBufferBus] buffer in
+      cancellable = upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
         let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
-        sampleBufferBus.emit(event: pixelBuffer)
+        pixelBufferBus.emit(element: pixelBuffer)
       }
     }
   }

@@ -2,7 +2,7 @@
 import Foundation
 import AVFoundation
 
-public protocol OutputComponentType: AnyObject {
+public protocol InputNodeType: AnyObject {
   func setUp(sessionInConfiguring: AVCaptureSession)
   func tearDown(sessionInConfiguring: AVCaptureSession)
 }

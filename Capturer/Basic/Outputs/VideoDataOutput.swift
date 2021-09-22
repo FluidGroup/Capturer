@@ -1,17 +1,18 @@
 import AVFoundation
 import Foundation
 
-public final class VideoDataOutput: _StatefulObjectBase, OutputComponentType {
+public final class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, PixelBufferOutputNodeType {
 
-  struct Handlers {
+  private struct Handlers {
     var didOutput: (CMSampleBuffer) -> Void = { _ in }
   }
+
+  public let sampleBufferBus: EventBus<CMSampleBuffer> = .init()
+  public let pixelBufferBus: EventBus<CVPixelBuffer> = .init()
 
   private let _output = AVCaptureVideoDataOutput()
 
   private let delegateProxy = _AVCaptureVideoDataOutputSampleBufferDelegateProxy()
-
-  public let sampleBufferBus: EventBus<CMSampleBuffer> = .init()
 
   private var observation: NSKeyValueObservation?
 
@@ -21,8 +22,12 @@ public final class VideoDataOutput: _StatefulObjectBase, OutputComponentType {
 
     _output.setSampleBufferDelegate(delegateProxy, queue: queue)
 
-    delegateProxy.handlers.didOutput = { [sampleBufferBus] sampleBuffer in
-      sampleBufferBus.emit(event: sampleBuffer)
+    delegateProxy.handlers.didOutput = { [sampleBufferBus, pixelBufferBus] sampleBuffer in
+      sampleBufferBus.emit(element: sampleBuffer)
+
+      if pixelBufferBus.hasTargets {
+        pixelBufferBus.emit(element: sampleBuffer.takeCVPixelBuffer().unsafelyUnwrapped)
+      }
     }
 
     observation = _output.observe(\.connections, options: [.initial, .new]) { output, changes in

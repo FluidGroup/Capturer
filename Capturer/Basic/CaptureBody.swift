@@ -6,8 +6,8 @@ public final class CaptureBody {
 
   public let session: AVCaptureSession
 
-  private var inputComponent: InputComponentType?
-  private var outputComponents: [OutputComponentType] = []
+  private var inputComponent: InputNodeType?
+  private var outputComponents: [OutputNodeType] = []
 
   private let configurationQueue = DispatchQueue(label: "CameraBody")
 
@@ -34,7 +34,7 @@ public final class CaptureBody {
     session.stopRunning()
   }
 
-  public func attach(input component: InputComponentType) {
+  public func attach(input component: InputNodeType) {
 
     Log.debug(.capture, "Attach input \(component)")
 
@@ -49,7 +49,7 @@ public final class CaptureBody {
     }
   }
 
-  public func attach(output component: OutputComponentType) {
+  public func attach(output component: OutputNodeType) {
 
     Log.debug(.capture, "Attach output \(component)")
 

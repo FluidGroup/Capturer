@@ -2,11 +2,11 @@
 import Foundation
 import AVFoundation
 
-public final class AnyOutput<Downstream>: OutputComponentType {
+public final class AnyOutput<Downstream>: OutputNodeType {
 
-  private let backing: OutputComponentType
+  private let backing: OutputNodeType
 
-  public init(_ backing: OutputComponentType) {
+  public init(_ backing: OutputNodeType) {
     self.backing = backing
   }
 

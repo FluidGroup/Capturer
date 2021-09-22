@@ -1,7 +1,7 @@
 import AVFoundation
 import UIKit
 
-public final class PhotoOutput: _StatefulObjectBase, OutputComponentType {
+public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
   private let _output = AVCapturePhotoOutput()
 

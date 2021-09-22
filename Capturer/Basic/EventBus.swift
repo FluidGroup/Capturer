@@ -37,28 +37,36 @@ public final class EventBusCancellable: Hashable {
 }
 
 /// [non-atomic]
-public final class EventBus<Event> {
+public final class EventBus<Element> {
 
-  public typealias Handler = (Event) -> Void
+  public typealias Handler = (Element) -> Void
+
+  public var hasTargets: Bool = false
 
   public init() {
 
   }
 
-  var targets: ContiguousArray<(EventBusCancellable, Handler)> = .init()
+  private var targets: ContiguousArray<(EventBusCancellable, Handler)> = .init() {
+    didSet {
+      hasTargets = targets.isEmpty == false
+    }
+  }
 
   public func addHandler(_ handler: @escaping Handler) -> EventBusCancellable {
+
     let cancellable = EventBusCancellable { [weak self] cancellable in
       guard let self = self else { return }
       self.targets.removeAll { $0.0 == cancellable }
     }
+
     targets.append((cancellable, handler))
     return cancellable
   }
 
-  public func emit(event: Event) {
-    targets.forEach {
-      $0.1(event)
+  public func emit(element: Element) {
+    for target in targets {
+      target.1(element)
     }
   }
 
