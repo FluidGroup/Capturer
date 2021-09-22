@@ -11,11 +11,11 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
     /**
      Creates an image from captured data with current device orientation.
      */
-    public func makeOrientationFixedImage() -> UIImage {
+    public func makeOrientationFixedImage(isMirrored: Bool) -> UIImage {
       .init(
         cgImage: photo.cgImageRepresentation()!,
         scale: 1,
-        orientation: preferredOrientation.uiImageOrientation
+        orientation: isMirrored ? preferredOrientation.uiImageOrientationMirrored : preferredOrientation.uiImageOrientation
       )
     }
 
@@ -33,7 +33,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
   public func makeCaptureSettings() -> AVCapturePhotoSettings {
 
-    let settings = AVCapturePhotoSettings(format: [:])
+    let settings = AVCapturePhotoSettings()
 
     /// deprecated from iOS 13
     settings.isAutoStillImageStabilizationEnabled = true

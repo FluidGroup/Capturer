@@ -19,6 +19,8 @@ final class DemoInputPreviewViewController: UIViewController {
     }
   )
 
+  var isMirrored = false
+
   override func viewDidLoad() {
     super.viewDidLoad()
 
@@ -26,69 +28,99 @@ final class DemoInputPreviewViewController: UIViewController {
 
     // Set Up
 
-    let input = CameraInput.wideAngleCamera(position: .back)
-    captureBody.attach(input: input)
+    Task {
 
-    let previewOutput = VideoDataOutput()
-    let photoOutput = PhotoOutput()
+      do {
 
-    captureBody.attach(output: previewOutput)
-    captureBody.attach(output: photoOutput)
+        let indicator = UIActivityIndicatorView(style: .large)
 
-    let previewView = PixelBufferView()
-    previewView.attach(output: previewOutput)
+        view.mondrian.buildSubviews {
+          ZStackBlock {
+            indicator
+          }
+        }
 
-    captureBody.start()
+        indicator.startAnimating()
+      }
 
-    let ratio = captureBody.state.inputInfo!.aspectRatio
+      let input = CameraInput.wideAngleCamera(position: .back)
+      await captureBody.attach(input: input)
 
-    // Layout
+      let previewOutput = PreviewOutput()
+      let photoOutput = PhotoOutput()
 
-    view.mondrian.buildSubviews {
-      LayoutContainer(attachedSafeAreaEdges: .all) {
-        VStackBlock(alignment: .fill) {
-          previewView
-            .viewBlock
-            .aspectRatio(ratio)
+      await captureBody.attach(output: previewOutput)
+      await captureBody.attach(output: photoOutput)
 
-          HStackBlock(spacing: 4) {
+      let previewView = PixelBufferView()
+      previewView.attach(output: previewOutput)
 
-            UIButton.make(title: "Use back") { [unowned self] in
-              let input = CameraInput.wideAngleCamera(position: .back)
-              captureBody.attach(input: input)
-            }
+      captureBody.start()
 
-            UIButton.make(title: "Use front") { [unowned self] in
-              let input = CameraInput.wideAngleCamera(position: .front)
-              captureBody.attach(input: input)
-            }
+      let ratio = previewOutput.state.inputInfo!.aspectRatioRespectingVideoOrientation
 
-            UIButton.make(title: "Remove input") { [unowned self] in
-              captureBody.removeCurrentInput()
-            }
+      view.subviews.forEach {
+        $0.removeFromSuperview()
+      }
 
-            UIButton.make(title: "Capture") { [unowned photoOutput] in
+      view.mondrian.buildSubviews {
+        LayoutContainer(attachedSafeAreaEdges: .all) {
+          VStackBlock(alignment: .fill) {
+            previewView
+              .viewBlock
+              .aspectRatio(ratio)
 
-              Task {
-                do {
-                  let result = try await photoOutput.capture(with: .init())
-                  let image = result.makeOrientationFixedImage()
-                  UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                  print(image)
-                } catch {
-                  print(error)
+            HStackBlock(spacing: 4) {
+
+              UIButton.make(title: "Use back") { [unowned self] in
+                Task { [weak self] in
+                  let input = CameraInput.wideAngleCamera(position: .back)
+                  await captureBody.attach(input: input)
+                  previewOutput.setIsMirroringEnabled(false)
+                  self?.isMirrored = false
                 }
               }
+
+              UIButton.make(title: "Use front") { [unowned self] in
+                Task { [weak self] in
+                  let input = CameraInput.wideAngleCamera(position: .front)
+                  await captureBody.attach(input: input)
+                  previewOutput.setIsMirroringEnabled(true)
+                  self?.isMirrored = true
+                }
+              }
+
+              UIButton.make(title: "Remove input") { [unowned self] in
+                captureBody.removeCurrentInput()
+              }
+
+              UIButton.make(title: "Capture") { [unowned photoOutput, unowned self] in
+
+                Task { [weak self] in
+                  do {
+
+                    let result = try await photoOutput.capture(with: photoOutput.makeCaptureSettings())
+
+                    guard let self = self else { return }
+
+                    let image = result.makeOrientationFixedImage(isMirrored: self.isMirrored)
+                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    print(image)
+                  } catch {
+                    print(error)
+                  }
+                }
+              }
+
+              StackingSpacer(minLength: 0)
+
             }
-
-            StackingSpacer(minLength: 0)
-
           }
         }
       }
     }
 
-
+    // Layout
 
   }
 

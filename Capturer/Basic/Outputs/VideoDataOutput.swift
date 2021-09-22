@@ -1,7 +1,7 @@
 import AVFoundation
 import Foundation
 
-public final class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, PixelBufferOutputNodeType {
+open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, PixelBufferOutputNodeType {
 
   private struct Handlers {
     var didOutput: (CMSampleBuffer) -> Void = { _ in }
@@ -10,7 +10,7 @@ public final class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeT
   public let sampleBufferBus: EventBus<CMSampleBuffer> = .init()
   public let pixelBufferBus: EventBus<CVPixelBuffer> = .init()
 
-  private let _output = AVCaptureVideoDataOutput()
+  public let output = AVCaptureVideoDataOutput()
 
   private let delegateProxy = _AVCaptureVideoDataOutputSampleBufferDelegateProxy()
 
@@ -18,9 +18,11 @@ public final class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeT
 
   public override init() {
 
+    super.init()
+
     let queue = DispatchQueue(label: "Capturer.VideoDataOutput")
 
-    _output.setSampleBufferDelegate(delegateProxy, queue: queue)
+    output.setSampleBufferDelegate(delegateProxy, queue: queue)
 
     delegateProxy.handlers.didOutput = { [sampleBufferBus, pixelBufferBus] sampleBuffer in
       sampleBufferBus.emit(element: sampleBuffer)
@@ -30,25 +32,22 @@ public final class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeT
       }
     }
 
-    observation = _output.observe(\.connections, options: [.initial, .new]) { output, changes in
-      print(output.connections)
-
-      // TODO: handles connections with better way
-      if let firstConnection = output.connections.first {
-        firstConnection.videoOrientation = .portrait
-      } else {
-
-      }
-
+    observation = output.observe(\.connections, options: [.initial, .new]) { [weak self] output, _ in
+      guard let self = self else { return }
+      self.didChange(connections: output.connections)
     }
   }
 
+  open func didChange(connections: [AVCaptureConnection]) {
+
+  }
+
   public func setUp(sessionInConfiguring: AVCaptureSession) {
-    sessionInConfiguring.addOutput(_output)
+    sessionInConfiguring.addOutput(output)
   }
 
   public func tearDown(sessionInConfiguring: AVCaptureSession) {
-    sessionInConfiguring.removeOutput(_output)
+    sessionInConfiguring.removeOutput(output)
   }
 
   private final class _AVCaptureVideoDataOutputSampleBufferDelegateProxy: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {

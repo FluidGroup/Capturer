@@ -22,18 +22,6 @@ public final class CaptureBody {
 
   public struct State: Equatable {
 
-    public struct InputInfo: Equatable {
-
-      public let activeFormat: AVCaptureDevice.Format
-
-      public var aspectRatio: CGSize {
-        let dimension = CMVideoFormatDescriptionGetDimensions(activeFormat.formatDescription)
-        return CGSize(width: CGFloat(dimension.width), height: CGFloat(dimension.height))
-      }
-    }
-
-    public var inputInfo: InputInfo?
-
   }
 
   public struct Handlers {
@@ -60,8 +48,6 @@ public final class CaptureBody {
 
   private let configurationQueue = DispatchQueue(label: "CameraBody")
 
-  private var activeFormatObservation: NSKeyValueObservation?
-
   @MainActor
   public init(
     configuration: Configuration
@@ -81,7 +67,9 @@ public final class CaptureBody {
 
     Log.debug(.capture, "Session started")
 
-    session.startRunning()
+    configurationQueue.sync {
+      session.startRunning()
+    }
   }
 
   @MainActor
@@ -89,18 +77,19 @@ public final class CaptureBody {
 
     Log.debug(.capture, "Session stopped")
 
-    session.stopRunning()
+    configurationQueue.sync {
+      session.stopRunning()
+    }
   }
 
   /**
    Attaches an input with replacing current input.
    */
-  @MainActor
-  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) {
+  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node, completion: @escaping () -> Void) {
 
     Log.debug(.capture, "Attach input \(newInputNode)")
 
-    configurationQueue.sync {
+    configurationQueue.async { [self] in
 
       session.performConfiguration { session in
 
@@ -113,38 +102,54 @@ public final class CaptureBody {
         newInputNode.setUp(sessionInConfiguring: session)
       }
 
-      activeFormatObservation?.invalidate()
-      activeFormatObservation = newInputNode.device.observe(\.activeFormat, options: [.initial, .new]) { [weak self] _, c in
-        self?.state.inputInfo = c.newValue.map { .init(activeFormat: $0) }
-      }
+      completion()
     }
 
   }
 
-  @MainActor
-  public func attach<Node: OutputNodeType>(output component: Node) {
+  @available(iOS 15.0.0, *)
+  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) async {
+    await withCheckedContinuation { c in
+      attach(input: newInputNode) {
+        c.resume()
+      }
+    }
+  }
+
+  public func attach<Node: OutputNodeType>(output component: Node, completion: @escaping () -> Void) {
 
     Log.debug(.capture, "Attach output \(component)")
 
-    configurationQueue.sync {
+    configurationQueue.async { [self] in
       outputNodes.append(component)
 
       session.performConfiguration {
         component.setUp(sessionInConfiguring: $0)
       }
+
+      completion()
+    }
+  }
+  
+  @available(iOS 15.0.0, *)
+  public func attach<Node: OutputNodeType>(output component: Node) async {
+    await withCheckedContinuation { c in
+      attach(output: component) {
+        c.resume()
+      }
     }
   }
 
-  @MainActor
   public func removeCurrentInput() {
 
-    guard let currentInput = inputNode else {
-      return
-    }
+    configurationQueue.async { [self] in
 
-    inputNode = nil
+      guard let currentInput = inputNode else {
+        return
+      }
 
-    configurationQueue.sync {
+      inputNode = nil
+
       session.performConfiguration {
         currentInput.tearDown(sessionInConfiguring: $0)
       }
@@ -154,8 +159,6 @@ public final class CaptureBody {
   deinit {
 
     Log.debug(.capture, "\(self) deinitializes")
-
-    activeFormatObservation?.invalidate()
 
     session.performConfiguration {
       inputNode?.tearDown(sessionInConfiguring: $0)

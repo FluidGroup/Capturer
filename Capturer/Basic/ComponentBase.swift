@@ -1,7 +1,6 @@
-
 import Foundation
 
-public class _StatefulObjectBase: Hashable {
+open class _StatefulObjectBase: Hashable {
 
   public static func == (lhs: _StatefulObjectBase, rhs: _StatefulObjectBase) -> Bool {
     lhs === rhs
@@ -12,5 +11,3 @@ public class _StatefulObjectBase: Hashable {
   }
 
 }
-
-
