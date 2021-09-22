@@ -1,7 +1,11 @@
 
 import AVFoundation
 
-public final class CameraInput: _StatefulObjectBase, InputNodeType {
+public final class CameraInput: _StatefulObjectBase, DeviceInputNodeType {
+
+  public var device: AVCaptureDevice {
+    captureDeviceInput.device
+  }
 
   public let captureDeviceInput: AVCaptureDeviceInput
 

@@ -42,12 +42,16 @@ final class DemoInputPreviewViewController: UIViewController {
 
     OrientationManager.shared.start()
 
+    let ratio = captureBody.state.inputInfo!.aspectRatio
+
     // Layout
 
     view.mondrian.buildSubviews {
       LayoutContainer(attachedSafeAreaEdges: .all) {
         VStackBlock(alignment: .fill) {
           previewView
+            .viewBlock
+            .aspectRatio(ratio)
 
           HStackBlock(spacing: 4) {
 

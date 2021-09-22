@@ -11,12 +11,47 @@ public final class CaptureBody {
 
     }
 
-    public init(modify: (inout Self) -> Void) {
+    public init(
+      modify: (inout Self) -> Void
+    ) {
       var instance = Self()
       modify(&instance)
       self = instance
     }
   }
+
+  public struct State: Equatable {
+
+    public struct InputInfo: Equatable {
+
+      public let activeFormat: AVCaptureDevice.Format
+
+      public var aspectRatio: CGSize {
+        let dimension = CMVideoFormatDescriptionGetDimensions(activeFormat.formatDescription)
+        return CGSize(width: CGFloat(dimension.width), height: CGFloat(dimension.height))
+      }
+    }
+
+    public var inputInfo: InputInfo?
+
+  }
+
+  public struct Handlers {
+
+    public var didChangeState: (State) -> Void = { _ in }
+
+    public init() {}
+  }
+
+  public private(set) var state: State = .init() {
+    didSet {
+      if oldValue != state {
+        handlers.didChangeState(state)
+      }
+    }
+  }
+
+  public var handlers: Handlers = .init()
 
   public let session: AVCaptureSession
 
@@ -24,6 +59,8 @@ public final class CaptureBody {
   private var outputNodes: [OutputNodeType] = []
 
   private let configurationQueue = DispatchQueue(label: "CameraBody")
+
+  private var activeFormatObservation: NSKeyValueObservation?
 
   @MainActor
   public init(
@@ -34,7 +71,9 @@ public final class CaptureBody {
 
     session.performConfiguration {
       $0.sessionPreset = configuration.sessionPreset
+      $0.automaticallyConfiguresCaptureDeviceForWideColor = true
     }
+
   }
 
   @MainActor
@@ -57,7 +96,7 @@ public final class CaptureBody {
    Attaches an input with replacing current input.
    */
   @MainActor
-  public func attach(input newInputNode: InputNodeType) {
+  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) {
 
     Log.debug(.capture, "Attach input \(newInputNode)")
 
@@ -73,12 +112,17 @@ public final class CaptureBody {
 
         newInputNode.setUp(sessionInConfiguring: session)
       }
+
+      activeFormatObservation?.invalidate()
+      activeFormatObservation = newInputNode.device.observe(\.activeFormat, options: [.initial, .new]) { [weak self] _, c in
+        self?.state.inputInfo = c.newValue.map { .init(activeFormat: $0) }
+      }
     }
 
   }
 
   @MainActor
-  public func attach(output component: OutputNodeType) {
+  public func attach<Node: OutputNodeType>(output component: Node) {
 
     Log.debug(.capture, "Attach output \(component)")
 
@@ -110,6 +154,8 @@ public final class CaptureBody {
   deinit {
 
     Log.debug(.capture, "\(self) deinitializes")
+
+    activeFormatObservation?.invalidate()
 
     session.performConfiguration {
       inputNode?.tearDown(sessionInConfiguring: $0)
