@@ -13,34 +13,54 @@ import UIKit
 @available(iOS 15, *)
 final class DemoInputPreviewViewController: UIViewController {
 
-  let sessionManager = CaptureBody()
+  private let captureBody = CaptureBody(
+    configuration: .init {
+      $0.sessionPreset = .photo
+    }
+  )
 
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    let output = AnyCVPixelBufferOutput(
-      upstream: VideoDataOutput()
-    )
+    view.backgroundColor = .white
 
+    // Set Up
+
+    let input = CameraInput.wideAngleCamera(position: .back)
+    captureBody.attach(input: input)
+
+    let previewOutput = VideoDataOutput()
     let photoOutput = PhotoOutput()
 
-    sessionManager.attach(output: output)
-    sessionManager.attach(output: photoOutput)
+    captureBody.attach(output: previewOutput)
+    captureBody.attach(output: photoOutput)
 
     let previewView = PixelBufferView()
+    previewView.attach(output: previewOutput)
 
-    sessionManager.start()
+    captureBody.start()
+
+    // Layout
 
     view.mondrian.buildSubviews {
       LayoutContainer(attachedSafeAreaEdges: .all) {
         VStackBlock(alignment: .fill) {
           previewView
 
-          HStackBlock {
+          HStackBlock(spacing: 4) {
 
-            UIButton.make(title: "Set input") { [unowned self] in
-              let input = CameraInput()
-              sessionManager.attach(input: input)
+            UIButton.make(title: "Use back") { [unowned self] in
+              let input = CameraInput.wideAngleCamera(position: .back)
+              captureBody.attach(input: input)
+            }
+
+            UIButton.make(title: "Use front") { [unowned self] in
+              let input = CameraInput.wideAngleCamera(position: .front)
+              captureBody.attach(input: input)
+            }
+
+            UIButton.make(title: "Remove input") { [unowned self] in
+              captureBody.removeCurrentInput()
             }
 
             UIButton.make(title: "Capture") { [unowned photoOutput] in
@@ -57,12 +77,14 @@ final class DemoInputPreviewViewController: UIViewController {
               }
             }
 
+            StackingSpacer(minLength: 0)
+
           }
         }
       }
     }
 
-    previewView.attach(output: output)
+
 
   }
 

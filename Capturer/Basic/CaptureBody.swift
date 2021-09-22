@@ -1,25 +1,43 @@
-
-import Foundation
 import AVFoundation
+import Foundation
 
 public final class CaptureBody {
 
+  public struct Configuration {
+
+    public var sessionPreset: AVCaptureSession.Preset = .photo
+
+    public init() {
+
+    }
+
+    public init(modify: (inout Self) -> Void) {
+      var instance = Self()
+      modify(&instance)
+      self = instance
+    }
+  }
+
   public let session: AVCaptureSession
 
-  private var inputComponent: InputNodeType?
-  private var outputComponents: [OutputNodeType] = []
+  private var inputNode: InputNodeType?
+  private var outputNodes: [OutputNodeType] = []
 
   private let configurationQueue = DispatchQueue(label: "CameraBody")
 
-  public init() {
+  @MainActor
+  public init(
+    configuration: Configuration
+  ) {
     session = .init()
     assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
 
     session.performConfiguration {
-      $0.sessionPreset = .photo
+      $0.sessionPreset = configuration.sessionPreset
     }
   }
 
+  @MainActor
   public func start() {
 
     Log.debug(.capture, "Session started")
@@ -27,6 +45,7 @@ public final class CaptureBody {
     session.startRunning()
   }
 
+  @MainActor
   public func stop() {
 
     Log.debug(.capture, "Session stopped")
@@ -34,27 +53,37 @@ public final class CaptureBody {
     session.stopRunning()
   }
 
-  public func attach(input component: InputNodeType) {
+  /**
+   Attaches an input with replacing current input.
+   */
+  @MainActor
+  public func attach(input newInputNode: InputNodeType) {
 
-    Log.debug(.capture, "Attach input \(component)")
-
-    // TODO: guard attaching multiple inputs
+    Log.debug(.capture, "Attach input \(newInputNode)")
 
     configurationQueue.sync {
-      inputComponent = component
 
-      session.performConfiguration {
-        component.setUp(sessionInConfiguring: $0)
+      session.performConfiguration { session in
+
+        if let currentNode = inputNode {
+          currentNode.tearDown(sessionInConfiguring: session)
+        }
+
+        inputNode = newInputNode
+
+        newInputNode.setUp(sessionInConfiguring: session)
       }
     }
+
   }
 
+  @MainActor
   public func attach(output component: OutputNodeType) {
 
     Log.debug(.capture, "Attach output \(component)")
 
     configurationQueue.sync {
-      outputComponents.append(component)
+      outputNodes.append(component)
 
       session.performConfiguration {
         component.setUp(sessionInConfiguring: $0)
@@ -62,13 +91,14 @@ public final class CaptureBody {
     }
   }
 
+  @MainActor
   public func removeCurrentInput() {
 
-    guard let currentInput = inputComponent else {
+    guard let currentInput = inputNode else {
       return
     }
 
-    inputComponent = nil
+    inputNode = nil
 
     configurationQueue.sync {
       session.performConfiguration {
@@ -81,20 +111,19 @@ public final class CaptureBody {
 
     Log.debug(.capture, "\(self) deinitializes")
 
-    removeCurrentInput()
+    session.performConfiguration {
+      inputNode?.tearDown(sessionInConfiguring: $0)
+    }
 
-    configurationQueue.sync { 
-      session.performConfiguration { session in
-        outputComponents.forEach { output in
-          output.tearDown(sessionInConfiguring: session)
-        }
+    session.performConfiguration { session in
+      outputNodes.forEach { output in
+        output.tearDown(sessionInConfiguring: session)
       }
     }
 
   }
 
 }
-
 
 extension AVCaptureSession {
 

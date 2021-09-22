@@ -18,7 +18,7 @@ public final class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeT
 
   public override init() {
 
-    let queue = DispatchQueue(label: "VideoDataOutputComponent")
+    let queue = DispatchQueue(label: "Capturer.VideoDataOutput")
 
     _output.setSampleBufferDelegate(delegateProxy, queue: queue)
 
