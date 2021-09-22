@@ -43,6 +43,7 @@
 		4B3D9BE226F9F4EB0037771E /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE126F9F4EB0037771E /* Logger.swift */; };
 		4B3D9BE426F9F7540037771E /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE326F9F7540037771E /* Extensions.swift */; };
 		4B3D9BE626F9FB2A0037771E /* CVPixelBufferModifying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */; };
+		4B4ECEED26FB28BD002D3CFB /* OrientationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4ECEEC26FB28BD002D3CFB /* OrientationManager.swift */; };
 		4B65D33926FA0E7600DBC163 /* PhotoOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */; };
 		4B9077CD26FB0C43008BF843 /* PixelBufferDisplaying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */; };
 		4B9077CF26FB0C5F008BF843 /* CoreImagePixelBufferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */; };
@@ -133,6 +134,7 @@
 		4B3D9BE126F9F4EB0037771E /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		4B3D9BE326F9F7540037771E /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		4B3D9BE526F9FB2A0037771E /* CVPixelBufferModifying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CVPixelBufferModifying.swift; sourceTree = "<group>"; };
+		4B4ECEEC26FB28BD002D3CFB /* OrientationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrientationManager.swift; sourceTree = "<group>"; };
 		4B65D33826FA0E7600DBC163 /* PhotoOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoOutput.swift; sourceTree = "<group>"; };
 		4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBufferDisplaying.swift; sourceTree = "<group>"; };
 		4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImagePixelBufferView.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 			children = (
 				4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */,
 				4B1DF69F2534A40300503E16 /* PixelBufferView.swift */,
+				4B4ECEEC26FB28BD002D3CFB /* OrientationManager.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -581,6 +584,7 @@
 				4B293EE02534A14B0057EF46 /* InputNodeType.swift in Sources */,
 				4B3D9BDE26F9D7D00037771E /* Utils.swift in Sources */,
 				4B0ED6C2253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift in Sources */,
+				4B4ECEED26FB28BD002D3CFB /* OrientationManager.swift in Sources */,
 				4B3D9BE026F9DE440037771E /* CameraInput.swift in Sources */,
 				4B0ED6C6253ACF300012ADE6 /* AnyOutput.swift in Sources */,
 				4B3D9BE226F9F4EB0037771E /* Logger.swift in Sources */,
@@ -777,7 +781,7 @@
 		4B2D586625346C410080E958 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
+				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
@@ -805,7 +809,7 @@
 		4B2D586725346C410080E958 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
+				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;

@@ -40,6 +40,8 @@ final class DemoInputPreviewViewController: UIViewController {
 
     captureBody.start()
 
+    OrientationManager.shared.start()
+
     // Layout
 
     view.mondrian.buildSubviews {

@@ -23,6 +23,7 @@ extension OSLog {
     #endif
   }
 
-  static let capture: OSLog = makeOSLogInDebug { OSLog.init(subsystem: "ComponentCamera", category: "📸 Capture") }
+  static let capture: OSLog = makeOSLogInDebug { OSLog.init(subsystem: "Capturer", category: "📸 Capture") }
 
+  static let orientation: OSLog = makeOSLogInDebug { OSLog.init(subsystem: "Capturer", category: "🤸🏻‍♂️ Orientation") }
 }
