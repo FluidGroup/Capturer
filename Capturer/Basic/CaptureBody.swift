@@ -82,6 +82,39 @@ public final class CaptureBody {
     }
   }
 
+  public func batchAttaching(
+    input newInputNode: InputNodeType,
+    outputs newOutputNodes: [OutputNodeType],
+    completion: @escaping () -> Void
+  ) {
+
+    configurationQueue.async { [self] in
+
+      session.performConfiguration { session in
+
+        if let currentInputNode = inputNode {
+          currentInputNode.tearDown(sessionInConfiguring: session)
+        }
+
+        inputNode = newInputNode
+
+        newInputNode.setUp(sessionInConfiguring: session)
+
+        outputNodes.append(contentsOf: newOutputNodes)
+
+        session.performConfiguration { session in
+          newOutputNodes.forEach {
+            $0.setUp(sessionInConfiguring: session)
+          }
+        }
+
+      }
+
+      completion()
+    }
+
+  }
+
   /**
    Attaches an input with replacing current input.
    */
