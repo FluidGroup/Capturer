@@ -110,7 +110,10 @@ public final class CaptureBody {
 
       }
 
-      completion()
+      DispatchQueue.main.async {
+        completion()
+      }
+
     }
 
   }
@@ -135,7 +138,9 @@ public final class CaptureBody {
         newInputNode.setUp(sessionInConfiguring: session)
       }
 
-      completion()
+      DispatchQueue.main.async {
+        completion()
+      }
     }
 
   }
@@ -160,7 +165,9 @@ public final class CaptureBody {
         component.setUp(sessionInConfiguring: $0)
       }
 
-      completion()
+      DispatchQueue.main.async {
+        completion()
+      }
     }
   }
   
