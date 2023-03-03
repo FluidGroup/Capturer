@@ -6,8 +6,8 @@
 //
 
 import Capturer
-import UIKit
 import MondrianLayout
+import UIKit
 
 @available(iOS 14, *)
 final class DemoInputPreviewClassicViewController: UIViewController {
@@ -31,34 +31,32 @@ final class DemoInputPreviewClassicViewController: UIViewController {
 
     let previewOutput = PreviewOutput()
     let photoOutput = PhotoOutput()
-    
+
     let previewView = PixelBufferView()
     previewView.attach(output: previewOutput)
 
-    captureBody.batchAttaching(
-      input: input,
-      outputs: [
-        previewOutput,
-        photoOutput,
-      ],
-      completion: { [self] in
+    Task {
 
-        let ratio = previewOutput.state.inputInfo!.aspectRatioRespectingVideoOrientation
+      await captureBody.batchAttaching(
+        input: input,
+        outputs: [
+          previewOutput,
+          photoOutput,
+        ]
+      )
+      let ratio = previewOutput.state.inputInfo!.aspectRatioRespectingVideoOrientation
 
-        view.mondrian.buildSubviews {
-          LayoutContainer(attachedSafeAreaEdges: .all) {
-            VStackBlock(alignment: .fill) {
-              previewView
-                .viewBlock
-                .aspectRatio(ratio)
-            }
+      view.mondrian.buildSubviews {
+        LayoutContainer(attachedSafeAreaEdges: .all) {
+          VStackBlock(alignment: .fill) {
+            previewView
+              .viewBlock
+              .aspectRatio(ratio)
           }
         }
       }
-    )
-
-
-    captureBody.start()
+      await captureBody.start()
+    }
 
   }
 

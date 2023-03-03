@@ -5,21 +5,35 @@
 //  Created by muukii on 2020/10/12.
 //
 
-import SwiftUI
 import Capturer
+import SwiftUI
 
-class ViewModel: ObservableObject {
+@MainActor
+final class ViewModel: ObservableObject {
 
-  let sessionManager = CaptureBody()
+  let sessionManager = CaptureBody(
+    configuration: .init {
+      $0.sessionPreset = .photo
+    }
+  )
   let output: AnyCVPixelBufferOutput
 
   init() {
 
-    let output = AnyCVPixelBufferOutput(upstream: VideoDataOutput(), filter: CoreImageFilter())
+    let output = AnyCVPixelBufferOutput(
+      upstream: PreviewOutput(),
+      filter: CoreImageFilter(filters: [])
+    )
     self.output = output
 
-    sessionManager.attach(output: output)
-    sessionManager.start()
+    Task {
+
+      let input = CameraInput.wideAngleCamera(position: .back)
+
+      await sessionManager.attach(input: input)
+      await sessionManager.attach(output: output)
+      await sessionManager.start()
+    }
 
   }
 
@@ -39,11 +53,11 @@ struct CameraView: View {
 
   var body: some View {
 
-//    CustomPixelBufferView<CoreImagePixelBufferView>(body: viewModel.sessionManager)
+    //    CustomPixelBufferView<CoreImagePixelBufferView>(body: viewModel.sessionManager)
     CustomPixelBufferView<PixelBufferView>(output: viewModel.output)
-//
-//    CustomPixelBufferView<CoreImagePixelBufferView>(body: viewModel.sessionManager)
-//    CustomPixelBufferView<PixelBufferView>(body: viewModel.sessionManager)
+    //
+    //    CustomPixelBufferView<CoreImagePixelBufferView>(body: viewModel.sessionManager)
+    //    CustomPixelBufferView<PixelBufferView>(body: viewModel.sessionManager)
 
   }
 

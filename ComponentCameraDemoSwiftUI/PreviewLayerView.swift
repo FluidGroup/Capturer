@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 import AVFoundation
-import ComponentCamera
+import Capturer
 
 final class _CaptureVideoPreviewView: UIView {
 
@@ -79,7 +79,7 @@ struct CustomPixelBufferView<View: PixelBufferDisplaying>: UIViewRepresentable {
   func makeUIView(context: Context) -> View {
     let view = View()
 
-    let cancellable = context.coordinator.output.sampleBufferBus.addHandler { [weak view] (buffer) in
+    let cancellable = context.coordinator.output.pixelBufferBus.addHandler { [weak view] (buffer) in
       guard let view = view else { return }
 //      let p = CMSampleBufferGetImageBuffer(buffer)!
       view.input(pixelBuffer: buffer)
