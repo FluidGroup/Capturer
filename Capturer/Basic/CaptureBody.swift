@@ -145,7 +145,6 @@ public final class CaptureBody {
 
   }
 
-  @available(iOS 15.0.0, *)
   public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) async {
     await withCheckedContinuation { c in
       attach(input: newInputNode) {
@@ -171,7 +170,6 @@ public final class CaptureBody {
     }
   }
   
-  @available(iOS 15.0.0, *)
   public func attach<Node: OutputNodeType>(output component: Node) async {
     await withCheckedContinuation { c in
       attach(output: component) {
