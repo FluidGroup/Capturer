@@ -55,7 +55,7 @@ final class DemoInputPreviewViewController: UIViewController {
       let previewView = PixelBufferView()
       previewView.attach(output: previewOutput)
 
-      captureBody.start()
+      await captureBody.start()
 
       let ratio = previewOutput.state.inputInfo!.aspectRatioRespectingVideoOrientation
 
@@ -91,7 +91,9 @@ final class DemoInputPreviewViewController: UIViewController {
               }
 
               UIButton.make(title: "Remove input") { [unowned self] in
-                captureBody.removeCurrentInput()
+                Task {
+                  await captureBody.removeCurrentInput()
+                }
               }
 
               UIButton.make(title: "Capture") { [unowned photoOutput, unowned self] in

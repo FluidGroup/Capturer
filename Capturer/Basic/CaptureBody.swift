@@ -1,7 +1,7 @@
 import AVFoundation
 import Foundation
 
-public final class CaptureBody {
+public actor CaptureBody {
 
   public struct Configuration {
 
@@ -46,9 +46,6 @@ public final class CaptureBody {
   private var inputNode: InputNodeType?
   private var outputNodes: [OutputNodeType] = []
 
-  private let configurationQueue = DispatchQueue(label: "CameraBody")
-
-  @MainActor
   public init(
     configuration: Configuration
   ) {
@@ -62,58 +59,42 @@ public final class CaptureBody {
 
   }
 
-  @MainActor
   public func start() {
 
     Log.debug(.capture, "Session started")
 
-    configurationQueue.sync {
-      session.startRunning()
-    }
+    session.startRunning()
   }
 
-  @MainActor
   public func stop() {
 
     Log.debug(.capture, "Session stopped")
 
-    configurationQueue.sync {
-      session.stopRunning()
-    }
+    session.stopRunning()
   }
 
   public func batchAttaching(
     input newInputNode: InputNodeType,
-    outputs newOutputNodes: [OutputNodeType],
-    completion: @escaping () -> Void
+    outputs newOutputNodes: [OutputNodeType]
   ) {
 
-    configurationQueue.async { [self] in
+    session.performConfiguration { session in
+
+      if let currentInputNode = inputNode {
+        currentInputNode.tearDown(sessionInConfiguring: session)
+      }
+
+      inputNode = newInputNode
+
+      newInputNode.setUp(sessionInConfiguring: session)
+
+      outputNodes.append(contentsOf: newOutputNodes)
 
       session.performConfiguration { session in
-
-        if let currentInputNode = inputNode {
-          currentInputNode.tearDown(sessionInConfiguring: session)
+        newOutputNodes.forEach {
+          $0.setUp(sessionInConfiguring: session)
         }
-
-        inputNode = newInputNode
-
-        newInputNode.setUp(sessionInConfiguring: session)
-
-        outputNodes.append(contentsOf: newOutputNodes)
-
-        session.performConfiguration { session in
-          newOutputNodes.forEach {
-            $0.setUp(sessionInConfiguring: session)
-          }
-        }
-
       }
-
-      DispatchQueue.main.async {
-        completion()
-      }
-
     }
 
   }
@@ -121,76 +102,45 @@ public final class CaptureBody {
   /**
    Attaches an input with replacing current input.
    */
-  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node, completion: @escaping () -> Void) {
+  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) {
 
     Log.debug(.capture, "Attach input \(newInputNode)")
 
-    configurationQueue.async { [self] in
+    session.performConfiguration { session in
 
-      session.performConfiguration { session in
-
-        if let currentNode = inputNode {
-          currentNode.tearDown(sessionInConfiguring: session)
-        }
-
-        inputNode = newInputNode
-
-        newInputNode.setUp(sessionInConfiguring: session)
+      if let currentNode = inputNode {
+        currentNode.tearDown(sessionInConfiguring: session)
       }
 
-      DispatchQueue.main.async {
-        completion()
-      }
+      inputNode = newInputNode
+
+      newInputNode.setUp(sessionInConfiguring: session)
     }
 
   }
 
-  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) async {
-    await withCheckedContinuation { c in
-      attach(input: newInputNode) {
-        c.resume()
-      }
-    }
-  }
-
-  public func attach<Node: OutputNodeType>(output component: Node, completion: @escaping () -> Void) {
+  public func attach<Node: OutputNodeType>(output component: Node) {
 
     Log.debug(.capture, "Attach output \(component)")
 
-    configurationQueue.async { [self] in
-      outputNodes.append(component)
+    outputNodes.append(component)
 
-      session.performConfiguration {
-        component.setUp(sessionInConfiguring: $0)
-      }
+    session.performConfiguration {
+      component.setUp(sessionInConfiguring: $0)
+    }
 
-      DispatchQueue.main.async {
-        completion()
-      }
-    }
-  }
-  
-  public func attach<Node: OutputNodeType>(output component: Node) async {
-    await withCheckedContinuation { c in
-      attach(output: component) {
-        c.resume()
-      }
-    }
   }
 
   public func removeCurrentInput() {
 
-    configurationQueue.async { [self] in
+    guard let currentInput = inputNode else {
+      return
+    }
 
-      guard let currentInput = inputNode else {
-        return
-      }
+    inputNode = nil
 
-      inputNode = nil
-
-      session.performConfiguration {
-        currentInput.tearDown(sessionInConfiguring: $0)
-      }
+    session.performConfiguration {
+      currentInput.tearDown(sessionInConfiguring: $0)
     }
   }
 
@@ -198,11 +148,11 @@ public final class CaptureBody {
 
     Log.debug(.capture, "\(self) deinitializes")
 
-    session.performConfiguration {
+    session.performConfiguration { [inputNode] in
       inputNode?.tearDown(sessionInConfiguring: $0)
     }
 
-    session.performConfiguration { session in
+    session.performConfiguration { [outputNodes] session in
       outputNodes.forEach { output in
         output.tearDown(sessionInConfiguring: session)
       }
