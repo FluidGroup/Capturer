@@ -3,7 +3,7 @@ import Foundation
 
 public actor CaptureBody {
 
-  public struct Configuration {
+  public struct Configuration: Sendable {
 
     public var sessionPreset: AVCaptureSession.Preset = .photo
 
