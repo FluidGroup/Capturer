@@ -67,10 +67,4 @@ open class PreviewOutput: VideoDataOutput {
 
   }
 
-  public func setIsMirroringEnabled(_ isEnabled: Bool) {
-    output.connections.forEach {
-      $0.isVideoMirrored = isEnabled
-    }
-  }
-
 }

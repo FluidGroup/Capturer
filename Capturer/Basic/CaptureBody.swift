@@ -102,7 +102,7 @@ public actor CaptureBody {
   /**
    Attaches an input with replacing current input.
    */
-  public func attach<Node: DeviceInputNodeType>(input newInputNode: Node) {
+  public func attach(input newInputNode: some DeviceInputNodeType) {
 
     Log.debug(.capture, "Attach input \(newInputNode)")
 
@@ -119,7 +119,7 @@ public actor CaptureBody {
 
   }
 
-  public func attach<Node: OutputNodeType>(output component: Node) {
+  public func attach(output component: some OutputNodeType) {
 
     Log.debug(.capture, "Attach output \(component)")
 
