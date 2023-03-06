@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4B06FDFD29B5C31A008A5389 /* export.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B06FDFC29B5C31A008A5389 /* export.swift */; };
 		4B0ED6C2253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6C1253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift */; };
 		4B0ED6C6253ACF300012ADE6 /* AnyOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6C5253ACF300012ADE6 /* AnyOutput.swift */; };
 		4B0ED6CA253AD0D50012ADE6 /* EventBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6C9253AD0D50012ADE6 /* EventBus.swift */; };
@@ -99,6 +100,7 @@
 
 /* Begin PBXFileReference section */
 		0D0DD43361FDDD43FB6D8A1E /* Pods_CapturerDemoSwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CapturerDemoSwiftUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B06FDFC29B5C31A008A5389 /* export.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = export.swift; sourceTree = "<group>"; };
 		4B0ED6C1253ACE4C0012ADE6 /* AnyCMSampleBufferOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCMSampleBufferOutput.swift; sourceTree = "<group>"; };
 		4B0ED6C5253ACF300012ADE6 /* AnyOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyOutput.swift; sourceTree = "<group>"; };
 		4B0ED6C9253AD0D50012ADE6 /* EventBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventBus.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 				4B293EDE2534A13A0057EF46 /* Inputs */,
 				4B293EDC2534A12A0057EF46 /* Outputs */,
 				4BBF6FC826FA32290047E633 /* PhotoTools.swift */,
+				4B06FDFC29B5C31A008A5389 /* export.swift */,
 			);
 			path = Basic;
 			sourceTree = "<group>";
@@ -589,6 +592,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B3688C325349F770067C298 /* ComponentBase.swift in Sources */,
+				4B06FDFD29B5C31A008A5389 /* export.swift in Sources */,
 				4B0ED6D0253AD8B20012ADE6 /* PixelBufferTransform.swift in Sources */,
 				4B293EE02534A14B0057EF46 /* InputNodeType.swift in Sources */,
 				4B3D9BDE26F9D7D00037771E /* Utils.swift in Sources */,
