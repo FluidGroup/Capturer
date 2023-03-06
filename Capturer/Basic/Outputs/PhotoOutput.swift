@@ -69,7 +69,6 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
   }
 
-  @available(iOS 15.0.0, *)
   public func capture(with settings: AVCapturePhotoSettings) async throws -> CapturePhoto {
     try await withCheckedThrowingContinuation { continuation in
       capture(with: settings) { result in
