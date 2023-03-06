@@ -14,6 +14,10 @@ open class PreviewOutput: VideoDataOutput {
         return CGSize(width: CGFloat(dimension.width), height: CGFloat(dimension.height))
       }
 
+      /**
+       Aspect ratio described using CGSize that applied orientation.
+       Normally, camera's top is the left side of the device.
+       */
       public var aspectRatioRespectingVideoOrientation: CGSize {
         Orientation(captureVideoOrientation: videoOrientation).applying(to: aspectRatio)
       }
