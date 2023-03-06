@@ -1,6 +1,10 @@
 import AVFoundation
 import UIKit
 
+/**
+ An output node for photo capturing.
+ Use ``PreviewOutput`` for previewing in UI.
+ */
 public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
   public struct CapturePhoto {
