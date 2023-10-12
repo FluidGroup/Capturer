@@ -26,21 +26,23 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   }
 
   private let _output = AVCapturePhotoOutput()
+  private let quality: AVCapturePhotoOutput.QualityPrioritization
 
   public let orientationManager = OrientationManager()
 
-  public override init() {
+  public init(quality: AVCapturePhotoOutput.QualityPrioritization = .balanced) {
+    self.quality = quality
     super.init()
 
     _output.isHighResolutionCaptureEnabled = true
-    _output.maxPhotoQualityPrioritization = .quality
+    _output.maxPhotoQualityPrioritization = quality
   }
 
   public func makeCaptureSettings() -> AVCapturePhotoSettings {
 
     let settings = AVCapturePhotoSettings()
 
-    settings.photoQualityPrioritization = .quality
+    settings.photoQualityPrioritization = quality
     settings.isHighResolutionPhotoEnabled = true
 
     return settings
