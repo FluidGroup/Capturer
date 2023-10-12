@@ -19,7 +19,14 @@ open class PreviewOutput: VideoDataOutput {
        Normally, camera's top is the left side of the device.
        */
       public var aspectRatioRespectingVideoOrientation: CGSize {
-        Orientation(captureVideoOrientation: videoOrientation).applying(to: aspectRatio)
+        switch videoOrientation {
+        case .portrait, .portraitUpsideDown:
+          return aspectRatio
+        case .landscapeLeft, .landscapeRight:
+          return .init(width: aspectRatio.height, height: aspectRatio.width)
+        @unknown default:
+          return aspectRatio
+        }
       }
     }
 
