@@ -31,24 +31,12 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   }
 
   private let _output = AVCapturePhotoOutput()
-  private let quality: AVCapturePhotoOutput.QualityPrioritization
 
   public init(quality: AVCapturePhotoOutput.QualityPrioritization = .balanced) {
-    self.quality = quality
     super.init()
 
     _output.isHighResolutionCaptureEnabled = true
     _output.maxPhotoQualityPrioritization = quality
-  }
-
-  public func makeCaptureSettings() -> AVCapturePhotoSettings {
-
-    let settings = AVCapturePhotoSettings()
-
-    settings.photoQualityPrioritization = quality
-    settings.isHighResolutionPhotoEnabled = true
-
-    return settings
   }
 
   public func capture(with settings: AVCapturePhotoSettings, completion: @escaping (Result<CapturePhoto, Error>) -> Void) {
