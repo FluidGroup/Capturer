@@ -7,7 +7,7 @@ on:
     branches: "*"
 
 jobs:
-  pod-lint:
+  build:
     runs-on: macos-13
 
     steps:
