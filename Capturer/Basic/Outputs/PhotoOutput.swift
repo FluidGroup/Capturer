@@ -40,7 +40,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
     let settings = AVCapturePhotoSettings()
 
     /// deprecated from iOS 13
-    settings.isAutoStillImageStabilizationEnabled = true
+    settings.photoQualityPrioritization = .quality
     settings.isHighResolutionPhotoEnabled = true
 
     return settings
