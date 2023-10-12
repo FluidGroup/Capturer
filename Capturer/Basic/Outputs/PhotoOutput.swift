@@ -1,5 +1,6 @@
 import AVFoundation
 import UIKit
+import ImageIO
 
 /**
  An output node for photo capturing.
@@ -10,16 +11,20 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   public struct CapturePhoto {
 
     public let photo: AVCapturePhoto
-    public let preferredOrientation: Orientation
+
+    public var orientation: CGImagePropertyOrientation {
+      let orientationValue = photo.metadata[String(kCGImagePropertyOrientation)] as! NSNumber
+      return CGImagePropertyOrientation(rawValue: orientationValue.uint32Value)!
+    }
 
     /**
-     Creates an image from captured data with current device orientation.
+     Creates an image from captured data
      */
-    public func makeOrientationFixedImage(isMirrored: Bool) -> UIImage {
+    public func makeImage(isMirrored: Bool) -> UIImage {
       .init(
         cgImage: photo.cgImageRepresentation()!,
         scale: 1,
-        orientation: isMirrored ? preferredOrientation.uiImageOrientationMirrored : preferredOrientation.uiImageOrientation
+        orientation: isMirrored ? orientation.uiImageOrientation.mirrored : orientation.uiImageOrientation
       )
     }
 
@@ -52,14 +57,12 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
     var completionWrapper: ((Result<CapturePhoto, Error>) -> Void)!
 
-    let orientation = orientationManager.state.orientation
-
     let proxy = _AVCapturePhotoCaptureDelegateProxy { photo, error in
       if let error = error {
         completionWrapper(.failure(error))
         return
       }
-      completionWrapper(.success(.init(photo: photo, preferredOrientation: orientation)))
+      completionWrapper(.success(.init(photo: photo)))
     }
 
     completionWrapper = {
@@ -94,12 +97,10 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   //  }
 
   public func setUp(sessionInConfiguring: AVCaptureSession) {
-    orientationManager.start()
     sessionInConfiguring.addOutput(_output)
   }
 
   public func tearDown(sessionInConfiguring: AVCaptureSession) {
-    orientationManager.stop()
     sessionInConfiguring.removeOutput(_output)
   }
 

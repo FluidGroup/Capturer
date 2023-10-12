@@ -105,7 +105,7 @@ final class DemoInputPreviewViewController: UIViewController {
 
                     guard let self = self else { return }
 
-                    let image = result.makeOrientationFixedImage(isMirrored: self.isMirrored)
+                    let image = result.makeImage(isMirrored: self.isMirrored)
                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                     print(image)
                   } catch {
