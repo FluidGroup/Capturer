@@ -100,8 +100,9 @@ final class DemoInputPreviewViewController: UIViewController {
 
                 Task { [weak self] in
                   do {
-
-                    let result = try await photoOutput.capture(with: photoOutput.makeCaptureSettings())
+                    let settings = AVCapturePhotoSettings()
+                    settings.isHighResolutionPhotoEnabled = true
+                    let result = try await photoOutput.capture(with: settings)
 
                     guard let self = self else { return }
 
