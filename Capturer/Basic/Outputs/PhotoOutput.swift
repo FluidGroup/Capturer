@@ -33,13 +33,13 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
     super.init()
 
     _output.isHighResolutionCaptureEnabled = true
+    _output.maxPhotoQualityPrioritization = .quality
   }
 
   public func makeCaptureSettings() -> AVCapturePhotoSettings {
 
     let settings = AVCapturePhotoSettings()
 
-    /// deprecated from iOS 13
     settings.photoQualityPrioritization = .quality
     settings.isHighResolutionPhotoEnabled = true
 
