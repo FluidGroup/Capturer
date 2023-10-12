@@ -33,8 +33,6 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   private let _output = AVCapturePhotoOutput()
   private let quality: AVCapturePhotoOutput.QualityPrioritization
 
-  public let orientationManager = OrientationManager()
-
   public init(quality: AVCapturePhotoOutput.QualityPrioritization = .balanced) {
     self.quality = quality
     super.init()
