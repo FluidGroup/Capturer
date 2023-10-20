@@ -61,7 +61,8 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
   }
 
   public func capture(with settings: AVCapturePhotoSettings) async throws -> CapturePhoto {
-    try await withCheckedThrowingContinuation { continuation in
+    guard AVCaptureDevice.authorizationStatus(for: .video).isAuthorized else { throw AVAuthorizationStatus.Error.notAuthorized }
+    return try await withCheckedThrowingContinuation { continuation in
       capture(with: settings) { result in
         continuation.resume(with: result)
       }
@@ -129,4 +130,18 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
     }
   }
 
+}
+
+
+extension AVAuthorizationStatus {
+  enum Error: Swift.Error {
+    case notAuthorized
+  }
+  var isAuthorized: Bool {
+    switch self {
+    case .authorized: true
+    case .notDetermined, .denied, .restricted: false
+    @unknown default: false
+    }
+  }
 }
