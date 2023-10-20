@@ -30,7 +30,7 @@ extension CameraInput {
     case back
   }
 
-  public static func wideAngleCamera(position: CameraPosition) -> CameraInput {
+  public static func wideAngleCamera(position: CameraPosition) throws -> CameraInput {
 
     let discoverySession = AVCaptureDevice.DiscoverySession(
       deviceTypes: [
@@ -46,7 +46,7 @@ extension CameraInput {
 
     let device = discoverySession.devices.first!
 
-    let input = try! AVCaptureDeviceInput(device: device)
+    let input = try AVCaptureDeviceInput(device: device)
 
     return .init(input: input)
   }
