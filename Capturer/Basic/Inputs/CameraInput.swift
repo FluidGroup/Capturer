@@ -30,25 +30,29 @@ extension CameraInput {
     case back
   }
 
-  public static func wideAngleCamera(position: CameraPosition) throws -> CameraInput {
-
-    let discoverySession = AVCaptureDevice.DiscoverySession(
-      deviceTypes: [
-        .builtInWideAngleCamera,
-      ], mediaType: .video,
-      position: {
-        switch position {
-        case .front: return .front
-        case .back: return .back
-        }
-      }()
-    )
-
-    let device = discoverySession.devices.first!
-
-    let input = try AVCaptureDeviceInput(device: device)
-
-    return .init(input: input)
+  enum Error: Swift.Error {
+    case couldNotFindCamera
   }
 
+  public static  func bestBuiltInDevice(position: CameraPosition) throws -> CameraInput {
+    let discoverySession = AVCaptureDevice.DiscoverySession(
+      deviceTypes:
+        [
+          .builtInWideAngleCamera,
+          .builtInUltraWideCamera,
+          .builtInTelephotoCamera
+        ],
+      mediaType: .video,
+      position: {
+        switch position {
+        case .front: .front
+        case .back: .back
+        }
+      }())
+    guard let device = discoverySession.devices.first else {
+      throw Error.couldNotFindCamera
+    }
+    let input = try AVCaptureDeviceInput(device: device)
+    return .init(input: input)
+  }
 }
