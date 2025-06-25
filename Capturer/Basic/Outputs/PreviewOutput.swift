@@ -1,6 +1,6 @@
 import AVFoundation
 
-open class PreviewOutput: VideoDataOutput {
+open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
   public struct State: Equatable {
 

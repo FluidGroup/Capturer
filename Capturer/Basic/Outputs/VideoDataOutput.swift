@@ -1,7 +1,7 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 import Foundation
 
-open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, PixelBufferOutputNodeType {
+open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, PixelBufferOutputNodeType, @unchecked Sendable {
 
   public struct State: Equatable {
     public var isVideoMirrored: Bool = false

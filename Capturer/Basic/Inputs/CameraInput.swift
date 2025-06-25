@@ -1,7 +1,7 @@
 
-import AVFoundation
+@preconcurrency import AVFoundation
 
-public final class CameraInput: _StatefulObjectBase, DeviceInputNodeType {
+public final class CameraInput: _StatefulObjectBase, DeviceInputNodeType, @unchecked Sendable {
 
   public var device: AVCaptureDevice {
     captureDeviceInput.device
@@ -15,6 +15,7 @@ public final class CameraInput: _StatefulObjectBase, DeviceInputNodeType {
   }
 
   public func setUp(sessionInConfiguring: AVCaptureSession) {
+      // Are those actually thread safe ?
     sessionInConfiguring.addInput(captureDeviceInput)
   }
 

@@ -3,7 +3,7 @@ import Foundation
 import CoreImage
 import AVFoundation
 
-open class CoreImagePixelBufferTransform: MapOutput<CMSampleBuffer, CVPixelBuffer> {
+open class CoreImagePixelBufferTransform: MapOutput<CMSampleBuffer, CVPixelBuffer>, @unchecked Sendable {
 
   private let ciContext = CIContext() // TODO: Use Metal
 

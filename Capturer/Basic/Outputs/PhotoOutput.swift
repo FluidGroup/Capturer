@@ -1,4 +1,4 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 import UIKit
 import ImageIO
 
@@ -6,9 +6,10 @@ import ImageIO
  An output node for photo capturing.
  Use ``PreviewOutput`` for previewing in UI.
  */
-public final class PhotoOutput: _StatefulObjectBase, OutputNodeType {
 
-  public struct CapturePhoto {
+public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked Sendable {
+
+    public struct CapturePhoto: Sendable {
 
     public let photo: AVCapturePhoto
 
