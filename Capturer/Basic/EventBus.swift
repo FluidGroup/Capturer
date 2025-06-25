@@ -24,7 +24,7 @@ public final class EventBusCancellable: Hashable, @unchecked Sendable {
 }
 
 /// [non-atomic]
-public final class EventBus<Element> {
+public final class EventBus<Element>: @unchecked Sendable {
 
   public typealias Handler = (Element) -> Void
 

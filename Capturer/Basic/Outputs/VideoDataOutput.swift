@@ -1,4 +1,8 @@
 @preconcurrency import AVFoundation
+@preconcurrency import CoreMedia
+
+extension CMSampleBuffer: @unchecked @retroactive Sendable {}
+
 import Foundation
 
 open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, PixelBufferOutputNodeType, @unchecked Sendable {
@@ -7,8 +11,16 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
     public var isVideoMirrored: Bool = false
   }
 
-  private struct Handlers {
-    var didOutput: (CMSampleBuffer) -> Void = { _ in }
+  private actor Handlers {
+      var didOutput: @Sendable (CMSampleBuffer) -> Void = { _ in }
+
+      func runOutput(buffer: CMSampleBuffer) {
+          self.didOutput(buffer)
+      }
+
+      func setDidOutput(_ didOutput: @escaping @Sendable (CMSampleBuffer) -> Void) {
+        self.didOutput = didOutput
+    }
   }
 
   public let sampleBufferBus: EventBus<CMSampleBuffer> = .init()
@@ -35,13 +47,15 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
 
     output.setSampleBufferDelegate(delegateProxy, queue: queue)
 
-    delegateProxy.handlers.didOutput = { [sampleBufferBus, pixelBufferBus] sampleBuffer in
-      sampleBufferBus.emit(element: sampleBuffer)
+      Task {
+          await delegateProxy.handlers.setDidOutput({ [sampleBufferBus, pixelBufferBus] sampleBuffer in
+              sampleBufferBus.emit(element: sampleBuffer)
 
-      if pixelBufferBus.hasTargets {
-        pixelBufferBus.emit(element: sampleBuffer.takeCVPixelBuffer().unsafelyUnwrapped)
+              if pixelBufferBus.hasTargets {
+                  pixelBufferBus.emit(element: sampleBuffer.takeCVPixelBuffer().unsafelyUnwrapped)
+              }
+          })
       }
-    }
 
     observation = output.observe(\.connections, options: [.initial, .new]) { [weak self] output, _ in
       guard let self = self else { return }
@@ -81,14 +95,17 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
 
   private final class _AVCaptureVideoDataOutputSampleBufferDelegateProxy: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
-    var handlers: Handlers = .init()
+    let handlers: Handlers = .init()
 
     func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
 
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-      handlers.didOutput(sampleBuffer)
+        let handlers = handlers
+        Task {
+           await handlers.runOutput(buffer: sampleBuffer)
+        }
     }
 
   }
