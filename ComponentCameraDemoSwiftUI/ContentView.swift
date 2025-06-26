@@ -31,9 +31,9 @@ final class ViewModel: ObservableObject {
     Task {
 
       let input = try CameraInput.bestBuiltInDevice(position: .back)
-     sessionManager.attach(input: input)
-     sessionManager.attach(output: output)
-     sessionManager.start()
+      await sessionManager.attach(input: input)
+      await sessionManager.attach(output: output)
+      await sessionManager.start()
     }
 
   }

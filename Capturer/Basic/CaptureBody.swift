@@ -2,98 +2,87 @@ import AVFoundation
 import Foundation
 
 
-// Can't be easily made into an actor do to the deinit. Maybe if the min framework is 18.4 we can move to an actor
-public final class CaptureBody: @unchecked Sendable {
-  private let backgroundExecutionQueue = DispatchQueue(label: "Capturer.CaptureBody.backgroundExecutionQueue", qos: .userInitiated)
+// to be replaced by the wrapped CaptureBody once ios 18.4 availability allow us to use isolated deinit.
+public typealias CaptureBody = CaptureBodyWrapper
 
-  public struct Configuration: Sendable {
+public final class CaptureBodyWrapper: @unchecked Sendable {
+  public typealias Configuration = CaptureBody.Configuration
 
-    public var sessionPreset: AVCaptureSession.Preset = .photo
+  public actor CaptureBody {
 
-    public init() {
+    public struct Configuration: Sendable {
 
-    }
+      public var sessionPreset: AVCaptureSession.Preset = .photo
 
-    public init(
-      modify: (inout Self) -> Void
-    ) {
-      var instance = Self()
-      modify(&instance)
-      self = instance
-    }
-  }
+      public init() {
 
-  public struct State: Equatable {
+      }
 
-  }
-
-  public struct Handlers {
-
-    public var didChangeState: (State) -> Void = { _ in }
-
-    public init() {}
-  }
-
-  public private(set) var state: State = .init() {
-    didSet {
-      if oldValue != state {
-        handlers.didChangeState(state)
+      public init(
+        modify: (inout Self) -> Void
+      ) {
+        var instance = Self()
+        modify(&instance)
+        self = instance
       }
     }
-  }
 
-  public var handlers: Handlers = .init()
+    public struct State: Equatable {
 
-  private lazy var session: AVCaptureSession = {
-    backgroundExecutionQueue.sync {
-      .init()
     }
-  }()
 
-  private var inputNode: InputNodeType?
-  private var outputNodes: [OutputNodeType] = []
+    public struct Handlers {
 
-  public init(
-    configuration: Configuration
-  ) {
-    guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
-    _ = self.session
+      public var didChangeState: (State) -> Void = { _ in }
 
-    assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
-    backgroundExecutionQueue.async {
+      public init() {}
+    }
+
+    public private(set) var state: State = .init() {
+      didSet {
+        if oldValue != state {
+          handlers.didChangeState(state)
+        }
+      }
+    }
+
+    public var handlers: Handlers = .init()
+
+    private let session: AVCaptureSession = .init()
+    private var inputNode: InputNodeType?
+    private var outputNodes: [OutputNodeType] = []
+
+    public init(
+      configuration: Configuration
+    ) {
+      guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
+      _ = self.session
+
+      assert(Utils.checkIfCanUseCameraAccordingToPrivacySensitiveData() == true)
 
       self.session.performConfiguration {
         $0.sessionPreset = configuration.sessionPreset
         $0.automaticallyConfiguresCaptureDeviceForWideColor = true
       }
+
     }
 
-  }
+    public func start() {
+      Log.debug(.capture, "Session started")
 
-  public func start() {
-
-    Log.debug(.capture, "Session started")
-
-    backgroundExecutionQueue.async {
       self.session.startRunning()
     }
-  }
 
-  public func stop() {
+    public func stop() {
 
-    Log.debug(.capture, "Session stopped")
-    backgroundExecutionQueue.async {
+      Log.debug(.capture, "Session stopped")
       self.session.stopRunning()
     }
-  }
 
-  public func batchAttaching(
-    input newInputNode: InputNodeType,
-    outputs newOutputNodes: [OutputNodeType]
-  ) {
-
-    backgroundExecutionQueue.async {
-
+    public func batchAttaching(
+      input newInputNode: InputNodeType,
+      outputs newOutputNodes: [OutputNodeType]
+    ) {
       self.session.performConfiguration { session in
 
         if let currentInputNode = self.inputNode {
@@ -112,17 +101,15 @@ public final class CaptureBody: @unchecked Sendable {
           }
         }
       }
+
     }
 
-  }
+    /**
+     Attaches an input with replacing current input.
+     */
+    public func attach(input newInputNode: some DeviceInputNodeType) {
 
-  /**
-   Attaches an input with replacing current input.
-   */
-  public func attach(input newInputNode: some DeviceInputNodeType) {
-
-    Log.debug(.capture, "Attach input \(newInputNode)")
-    backgroundExecutionQueue.async {
+      Log.debug(.capture, "Attach input \(newInputNode)")
 
       self.session.performConfiguration { session in
 
@@ -135,45 +122,34 @@ public final class CaptureBody: @unchecked Sendable {
         newInputNode.setUp(sessionInConfiguring: session)
       }
     }
-  }
 
-  public func attach(output component: some OutputNodeType) {
+    public func attach(output component: some OutputNodeType) {
 
-    Log.debug(.capture, "Attach output \(component)")
+      Log.debug(.capture, "Attach output \(component)")
 
-    outputNodes.append(component)
+      outputNodes.append(component)
 
-    backgroundExecutionQueue.async {
 
       self.session.performConfiguration {
         component.setUp(sessionInConfiguring: $0)
       }
     }
-  }
 
-  public func removeCurrentInput() {
+    public func removeCurrentInput() {
 
-    guard let currentInput = inputNode else {
-      return
-    }
+      guard let currentInput = inputNode else {
+        return
+      }
 
-    inputNode = nil
-
-    backgroundExecutionQueue.async {
+      inputNode = nil
 
       self.session.performConfiguration {
         currentInput.tearDown(sessionInConfiguring: $0)
       }
     }
-  }
 
-  deinit {
-
-    Log.debug(.capture, "\(self) deinitializes")
-
-
-    backgroundExecutionQueue.async { [inputNode, outputNodes, session] in
-
+    // upon migrating to ios 18.4, we can place this in the isolated deinit and remove the wrapper calling it
+    fileprivate func isolatedDeinitAction() {
       session.performConfiguration { [inputNode] in
         inputNode?.tearDown(sessionInConfiguring: $0)
       }
@@ -185,8 +161,55 @@ public final class CaptureBody: @unchecked Sendable {
       }
     }
 
+    deinit {
+
+      Log.debug(.capture, "\(self) deinitializes")
+
+    }
+
   }
 
+  // Boilerplate wrapping:
+  public init(
+    configuration: Configuration
+  ) {
+    self.wrappedCaptureBody = .init(configuration: configuration)
+  }
+
+  public func start() async {
+    await wrappedCaptureBody.start()
+  }
+
+  public func stop() async {
+    await wrappedCaptureBody.stop()
+  }
+
+  public func batchAttaching(
+    input newInputNode: InputNodeType,
+    outputs newOutputNodes: [OutputNodeType]
+  ) async {
+    await wrappedCaptureBody.batchAttaching(input: newInputNode, outputs: newOutputNodes)
+  }
+
+  public func removeCurrentInput() async {
+    await wrappedCaptureBody.removeCurrentInput()
+  }
+
+  public func attach(output component: some OutputNodeType) async {
+    await wrappedCaptureBody.attach(output: component)
+  }
+
+  public func attach(input newInputNode: some DeviceInputNodeType) async {
+    await wrappedCaptureBody.attach(input: newInputNode)
+  }
+
+  private let wrappedCaptureBody: CaptureBody
+
+  deinit {
+    Task { [wrappedCaptureBody] in
+      await wrappedCaptureBody.isolatedDeinitAction()
+    }
+  }
 }
 
 extension AVCaptureSession {
