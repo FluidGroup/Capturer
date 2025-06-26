@@ -56,11 +56,11 @@ public class AnyCVPixelBufferOutput: PixelBufferOutputNodeType, @unchecked Senda
     cancellable?.cancel()
   }
 
- nonisolated public func setUp(sessionInConfiguring: AVCaptureSession) {
+ public func setUp(sessionInConfiguring: AVCaptureSession) {
     upstream.setUp(sessionInConfiguring: sessionInConfiguring)
   }
 
-  nonisolated public func tearDown(sessionInConfiguring: AVCaptureSession) {
+  public func tearDown(sessionInConfiguring: AVCaptureSession) {
     upstream.tearDown(sessionInConfiguring: sessionInConfiguring)
   }
 

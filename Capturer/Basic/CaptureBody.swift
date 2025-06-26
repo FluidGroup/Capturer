@@ -1,6 +1,8 @@
 import AVFoundation
 import Foundation
 
+
+// Can't be easily made into an actor do to the deinit. Maybe if the min framework is 18.4 we can move to an actor
 public final class CaptureBody: @unchecked Sendable {
   private let backgroundExecutionQueue = DispatchQueue(label: "Capturer.CaptureBody.backgroundExecutionQueue", qos: .userInitiated)
 
