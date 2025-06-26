@@ -3,13 +3,15 @@ import Foundation
 import AVFoundation
 @preconcurrency import CoreMedia
 
+extension CVBuffer: @retroactive @unchecked Sendable {}
+
 public class AnyCVPixelBufferOutput: PixelBufferOutputNodeType, @unchecked Sendable {
 
   public let pixelBufferBus: EventBus<CVPixelBuffer> = .init()
 
   private let upstream: VideoDataOutput
 
-  private var cancellable: EventBusCancellable?
+  private var cancellable: EventBusCancellable? = nil
 
     public init<Filter: CVPixelBufferModifying & Sendable>(
     upstream: VideoDataOutput,
@@ -18,16 +20,24 @@ public class AnyCVPixelBufferOutput: PixelBufferOutputNodeType, @unchecked Senda
         self.upstream = upstream
 
         if (filter is NoPixelBufferModifier) == false {
-            cancellable = upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
-                let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
-                let new = filter.perform(pixelBuffer: pixelBuffer)
-                pixelBufferBus.emit(element: new)
+          Task {
+            self.cancellable = await upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
+              let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
+              let new = filter.perform(pixelBuffer: pixelBuffer)
+              Task {
+                await pixelBufferBus.emit(element: new)
+              }
             }
+          }
         } else {
-            cancellable = upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
-                let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
-                pixelBufferBus.emit(element: pixelBuffer)
+          Task {
+            cancellable = await upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
+              let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
+              Task {
+                await pixelBufferBus.emit(element: pixelBuffer)
+              }
             }
+          }
         }
     }
 

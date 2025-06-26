@@ -17,27 +17,29 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
     fatalError("init(coder:) has not been implemented")
   }
 
+  @MainActor
   public func input(pixelBuffer: CVPixelBuffer) {
-    // TODO: Consider using dispatching
-    DispatchQueue.main.async {
-      /**
-       CALayer.contents supports displaying CVPixelBuffer implicitly.
-       */
-      self.layer.contents = pixelBuffer
-    }
+    /**
+     CALayer.contents supports displaying CVPixelBuffer implicitly.
+     */
+    self.layer.contents = pixelBuffer
   }
 
   @MainActor
-  public func attach<Output: PixelBufferOutputNodeType>(output: Output) {
+  public func attach<Output: PixelBufferOutputNodeType & Sendable>(output: Output) {
 
     assert(Thread.isMainThread)
 
     subscription?.cancel()
 
-    subscription = output
-      .pixelBufferBus
-      .addHandler { [unowned self] pixelBuffer in
-        self.input(pixelBuffer: pixelBuffer)
+    Task {
+      subscription = await output
+        .pixelBufferBus
+        .addHandler { [unowned self] pixelBuffer in
+          Task {
+            await self.input(pixelBuffer: pixelBuffer)
+          }
+        }
     }
   }
 

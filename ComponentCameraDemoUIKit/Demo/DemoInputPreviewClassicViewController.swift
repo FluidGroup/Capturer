@@ -27,7 +27,7 @@ final class DemoInputPreviewClassicViewController: UIViewController {
 
     // Set Up
 
-    let input = CameraInput.wideAngleCamera(position: .back)
+    let input = try! CameraInput.bestBuiltInDevice(position: .back)
 
     let previewOutput = PreviewOutput()
     let photoOutput = PhotoOutput()
@@ -37,7 +37,7 @@ final class DemoInputPreviewClassicViewController: UIViewController {
 
     Task {
 
-      await captureBody.batchAttaching(
+       captureBody.batchAttaching(
         input: input,
         outputs: [
           previewOutput,

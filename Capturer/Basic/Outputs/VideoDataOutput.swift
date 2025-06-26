@@ -49,11 +49,13 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
 
       Task {
           await delegateProxy.handlers.setDidOutput({ [sampleBufferBus, pixelBufferBus] sampleBuffer in
-              sampleBufferBus.emit(element: sampleBuffer)
+            Task {
+              await sampleBufferBus.emit(element: sampleBuffer)
 
-              if pixelBufferBus.hasTargets {
-                  pixelBufferBus.emit(element: sampleBuffer.takeCVPixelBuffer().unsafelyUnwrapped)
+              if await pixelBufferBus.hasTargets {
+                await pixelBufferBus.emit(element: sampleBuffer.takeCVPixelBuffer().unsafelyUnwrapped)
               }
+            }
           })
       }
 
