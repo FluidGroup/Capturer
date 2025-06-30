@@ -7,7 +7,7 @@ public protocol CVPixelBufferModifying {
 
 }
 
-public struct NoPixelBufferModifier: CVPixelBufferModifying {
+public struct NoPixelBufferModifier: CVPixelBufferModifying, Sendable {
 
   init() {
     

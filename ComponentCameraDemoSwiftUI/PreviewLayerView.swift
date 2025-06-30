@@ -79,13 +79,17 @@ struct CustomPixelBufferView<View: PixelBufferDisplaying>: UIViewRepresentable {
   func makeUIView(context: Context) -> View {
     let view = View()
 
-    let cancellable = context.coordinator.output.pixelBufferBus.addHandler { [weak view] (buffer) in
-      guard let view = view else { return }
-//      let p = CMSampleBufferGetImageBuffer(buffer)!
-      view.input(pixelBuffer: buffer)
+    Task {
+      let cancellable = await context.coordinator.output.pixelBufferBus.addHandler { [weak view] (buffer) in
+        guard let view = view else { return }
+        Task {
+          await view.input(pixelBuffer: buffer)
+        }
+      }
+      context.coordinator.cancellable = cancellable
     }
 
-    context.coordinator.cancellable = cancellable
+
     return view
   }
 

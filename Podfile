@@ -5,7 +5,7 @@ target 'CapturerDemoSwiftUI' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
 
-  pod 'Reveal-SDK'
+#  pod 'Reveal-SDK'
 
 end
 
@@ -14,7 +14,7 @@ target 'CapturerDemoUIKit' do
   use_frameworks!
 
   pod 'MondrianLayout'
-  pod 'Reveal-SDK'
+ # pod 'Reveal-SDK'
   pod 'StorybookKit'
   pod 'StorybookUI'
 

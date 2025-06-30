@@ -1,7 +1,8 @@
 
 import Foundation
+import os
 
-public final class EventBusCancellable: Hashable {
+public final class EventBusCancellable: Hashable, @unchecked Sendable {
 
   public static func == (lhs: EventBusCancellable, rhs: EventBusCancellable) -> Bool {
     lhs === rhs
@@ -11,7 +12,6 @@ public final class EventBusCancellable: Hashable {
     ObjectIdentifier(self).hash(into: &hasher)
   }
 
-  private var isAutoCancelEnabled: Bool = false
 
   private let _onCancel: (EventBusCancellable) -> Void
 
@@ -22,51 +22,42 @@ public final class EventBusCancellable: Hashable {
   public func cancel() {
     _onCancel(self)
   }
-
-  /// Enables auto cancellation on deinitialization.
-  /// [non-atomic]
-  public func enableAutoCancel() {
-    isAutoCancelEnabled = true
-  }
-
-  deinit {
-    if isAutoCancelEnabled {
-      cancel()
-    }
-  }
 }
 
 /// [non-atomic]
-public final class EventBus<Element> {
-
-  public typealias Handler = (Element) -> Void
+public actor EventBus<Element : Sendable> {
+  public typealias Handler = @Sendable (Element) -> Void
 
   public var hasTargets: Bool = false
 
   public init() {
-
   }
 
-  private var targets: ContiguousArray<(EventBusCancellable, Handler)> = .init() {
+  private var targets: ContiguousArray<(cancellable: EventBusCancellable, handler: Handler)> = .init() {
     didSet {
       hasTargets = targets.isEmpty == false
     }
+  }
+
+  private func removeTarget(matchingCancellable: EventBusCancellable) {
+    self.targets.removeAll { $0.cancellable == matchingCancellable }
   }
 
   public func addHandler(_ handler: @escaping Handler) -> EventBusCancellable {
 
     let cancellable = EventBusCancellable { [weak self] cancellable in
       guard let self = self else { return }
-      self.targets.removeAll { $0.0 == cancellable }
+      Task {
+        await self.removeTarget(matchingCancellable: cancellable)
+      }
     }
-
     targets.append((cancellable, handler))
     return cancellable
   }
 
   public func emit(element: Element) {
     for target in targets {
-      target.1(element)
+      target.handler(element)
     }
   }
 
