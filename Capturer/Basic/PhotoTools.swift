@@ -4,7 +4,7 @@ import UIKit
 enum PhotoTools {
 
   @MainActor
-  public static func save(image: UIImage, completion: @escaping (Result<Void, Error>) -> Void) {
+  public static func save(image: UIImage, completion: @escaping @Sendable (Result<Void, Error>) -> Void) {
 
     PHPhotoLibrary.shared().performChanges {
 

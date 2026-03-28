@@ -36,8 +36,8 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
       subscription = await output
         .pixelBufferBus
         .addHandler { [unowned self] pixelBuffer in
-          Task {
-            await self.input(pixelBuffer: pixelBuffer)
+          Task { @MainActor [unowned self] in
+            self.input(pixelBuffer: pixelBuffer)
           }
         }
     }
