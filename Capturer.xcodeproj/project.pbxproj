@@ -51,8 +51,6 @@
 		4B9077CF26FB0C5F008BF843 /* CoreImagePixelBufferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */; };
 		4B99BC0E26FB74C100CA722C /* PreviewOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B99BC0D26FB74C100CA722C /* PreviewOutput.swift */; };
 		4BBF6FC926FA32290047E633 /* PhotoTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBF6FC826FA32290047E633 /* PhotoTools.swift */; };
-		63ECED500C01AC459FB9283F /* Pods_CapturerDemoUIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EAF4397816B68CA79F051BAE /* Pods_CapturerDemoUIKit.framework */; };
-		B0373097F4B04993B1765393 /* Pods_CapturerDemoSwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D0DD43361FDDD43FB6D8A1E /* Pods_CapturerDemoSwiftUI.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -145,14 +143,6 @@
 		4B9077CE26FB0C5F008BF843 /* CoreImagePixelBufferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImagePixelBufferView.swift; sourceTree = "<group>"; };
 		4B99BC0D26FB74C100CA722C /* PreviewOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewOutput.swift; sourceTree = "<group>"; };
 		4BBF6FC826FA32290047E633 /* PhotoTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoTools.swift; sourceTree = "<group>"; };
-		53FE04182317F603CF1BD331 /* Pods-CapturerDemoUIKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoUIKit.debug.xcconfig"; path = "Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit.debug.xcconfig"; sourceTree = "<group>"; };
-		81E305E0D5CEF2969E15D213 /* Pods-ComponentCameraDemoSwiftUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoSwiftUI/Pods-ComponentCameraDemoSwiftUI.debug.xcconfig"; sourceTree = "<group>"; };
-		8D276A5D43D7E5CE1BECF749 /* Pods-CapturerDemoUIKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoUIKit.release.xcconfig"; path = "Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit.release.xcconfig"; sourceTree = "<group>"; };
-		8F0733D658442B83C47F1033 /* Pods-CapturerDemoSwiftUI.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoSwiftUI.release.xcconfig"; path = "Target Support Files/Pods-CapturerDemoSwiftUI/Pods-CapturerDemoSwiftUI.release.xcconfig"; sourceTree = "<group>"; };
-		9223848E27EB99AF618FAF0E /* Pods-ComponentCameraDemoUIKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoUIKit.release.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoUIKit/Pods-ComponentCameraDemoUIKit.release.xcconfig"; sourceTree = "<group>"; };
-		9A9D2AB239E86E0943DE440C /* Pods-ComponentCameraDemoSwiftUI.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoSwiftUI.release.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoSwiftUI/Pods-ComponentCameraDemoSwiftUI.release.xcconfig"; sourceTree = "<group>"; };
-		B0073AC956B13BF860A64ABC /* Pods-ComponentCameraDemoUIKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ComponentCameraDemoUIKit.debug.xcconfig"; path = "Target Support Files/Pods-ComponentCameraDemoUIKit/Pods-ComponentCameraDemoUIKit.debug.xcconfig"; sourceTree = "<group>"; };
-		D6D542B3A54C1F3AAABE0102 /* Pods-CapturerDemoSwiftUI.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CapturerDemoSwiftUI.debug.xcconfig"; path = "Target Support Files/Pods-CapturerDemoSwiftUI/Pods-CapturerDemoSwiftUI.debug.xcconfig"; sourceTree = "<group>"; };
 		EAF4397816B68CA79F051BAE /* Pods_CapturerDemoUIKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CapturerDemoUIKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -169,7 +159,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B2D5D8225347B7C0080E958 /* Capturer.framework in Frameworks */,
-				B0373097F4B04993B1765393 /* Pods_CapturerDemoSwiftUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,7 +167,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B3D9BD926F9D4A20037771E /* Capturer.framework in Frameworks */,
-				63ECED500C01AC459FB9283F /* Pods_CapturerDemoUIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,7 +221,6 @@
 				4B2D588325346C900080E958 /* ComponentCameraDemoUIKit */,
 				4B2D585E25346C410080E958 /* Products */,
 				4B2D5D8125347B7C0080E958 /* Frameworks */,
-				6C347E79C8C03ED8245E34C5 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -344,21 +331,6 @@
 			path = Extended;
 			sourceTree = "<group>";
 		};
-		6C347E79C8C03ED8245E34C5 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				81E305E0D5CEF2969E15D213 /* Pods-ComponentCameraDemoSwiftUI.debug.xcconfig */,
-				9A9D2AB239E86E0943DE440C /* Pods-ComponentCameraDemoSwiftUI.release.xcconfig */,
-				B0073AC956B13BF860A64ABC /* Pods-ComponentCameraDemoUIKit.debug.xcconfig */,
-				9223848E27EB99AF618FAF0E /* Pods-ComponentCameraDemoUIKit.release.xcconfig */,
-				D6D542B3A54C1F3AAABE0102 /* Pods-CapturerDemoSwiftUI.debug.xcconfig */,
-				8F0733D658442B83C47F1033 /* Pods-CapturerDemoSwiftUI.release.xcconfig */,
-				53FE04182317F603CF1BD331 /* Pods-CapturerDemoUIKit.debug.xcconfig */,
-				8D276A5D43D7E5CE1BECF749 /* Pods-CapturerDemoUIKit.release.xcconfig */,
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -395,7 +367,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4B2D587925346C740080E958 /* Build configuration list for PBXNativeTarget "CapturerDemoSwiftUI" */;
 			buildPhases = (
-				B57035BB5A2276438776D60F /* [CP] Check Pods Manifest.lock */,
 				4B2D586925346C730080E958 /* Sources */,
 				4B2D586A25346C730080E958 /* Frameworks */,
 				4B2D586B25346C730080E958 /* Resources */,
@@ -415,12 +386,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4B2D589325346C900080E958 /* Build configuration list for PBXNativeTarget "CapturerDemoUIKit" */;
 			buildPhases = (
-				673AA925E484A9C0899AF43F /* [CP] Check Pods Manifest.lock */,
 				4B2D587E25346C900080E958 /* Sources */,
 				4B2D587F25346C900080E958 /* Frameworks */,
 				4B2D588025346C900080E958 /* Resources */,
 				4B0A735B2534984500E1DEFF /* Embed Frameworks */,
-				5F5BFBA1BD2A0FD2C9E61DEE /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -501,70 +470,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		5F5BFBA1BD2A0FD2C9E61DEE /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CapturerDemoUIKit/Pods-CapturerDemoUIKit-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		673AA925E484A9C0899AF43F /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-CapturerDemoUIKit-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B57035BB5A2276438776D60F /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-CapturerDemoSwiftUI-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4B2D585925346C410080E958 /* Sources */ = {
@@ -780,9 +685,10 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = P8MA38JTXY;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -811,9 +717,10 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = P8MA38JTXY;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -838,13 +745,12 @@
 		};
 		4B2D587A25346C740080E958 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D6D542B3A54C1F3AAABE0102 /* Pods-CapturerDemoSwiftUI.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"ComponentCameraDemoSwiftUI/Preview Content\"";
-				DEVELOPMENT_TEAM = JX92XL88RZ;
+				DEVELOPMENT_TEAM = P8MA38JTXY;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -865,13 +771,12 @@
 		};
 		4B2D587B25346C740080E958 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8F0733D658442B83C47F1033 /* Pods-CapturerDemoSwiftUI.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"ComponentCameraDemoSwiftUI/Preview Content\"";
-				DEVELOPMENT_TEAM = JX92XL88RZ;
+				DEVELOPMENT_TEAM = P8MA38JTXY;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -892,12 +797,11 @@
 		};
 		4B2D589425346C900080E958 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 53FE04182317F603CF1BD331 /* Pods-CapturerDemoUIKit.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = JX92XL88RZ;
+				DEVELOPMENT_TEAM = P8MA38JTXY;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
@@ -917,12 +821,11 @@
 		};
 		4B2D589525346C900080E958 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8D276A5D43D7E5CE1BECF749 /* Pods-CapturerDemoUIKit.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = JX92XL88RZ;
+				DEVELOPMENT_TEAM = P8MA38JTXY;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",

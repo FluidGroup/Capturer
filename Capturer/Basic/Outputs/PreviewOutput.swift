@@ -59,8 +59,12 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
     // TODO: handles connections with better way
     if let connection = proposedConnection {
-
-      connection.videoOrientation = .portrait
+        let headingOffset: CGFloat = 270
+        let radians: CGFloat = headingOffset * .pi / 180.0
+        if connection.isVideoRotationAngleSupported(radians) {
+            connection.videoRotationAngle = radians
+        }
+//      connection.videoOrientation = .portrait
 
       let activeFormat = (connection.inputPorts.first!.input as! AVCaptureDeviceInput).device.activeFormat
 

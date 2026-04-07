@@ -15,7 +15,7 @@ final class _CaptureVideoPreviewView: UIView {
   class Layer: AVCaptureVideoPreviewLayer {
     override var contents: Any? {
       didSet {
-        print(contents)
+//        print(contents)
       }
     }
   }
@@ -42,7 +42,15 @@ struct CaptureVideoPreview: UIViewRepresentable {
   func makeUIView(context: Context) -> _CaptureVideoPreviewView {
     let view = _CaptureVideoPreviewView()
     view.videoPreviewLayer.session = session
-    return view
+      if let connection = view.videoPreviewLayer.connection {
+//      if let session {
+          let headingOffset: CGFloat = 180
+          let radians: CGFloat = headingOffset * .pi / 180.0
+          if connection.isVideoRotationAngleSupported(radians) {
+              connection.videoRotationAngle = radians
+          }
+      }
+      return view
   }
 
   func updateUIView(_ uiView: _CaptureVideoPreviewView, context: Context) {
