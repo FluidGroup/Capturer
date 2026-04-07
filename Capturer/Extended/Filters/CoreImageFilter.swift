@@ -2,7 +2,7 @@
 import Foundation
 import CoreImage
 
-open class CoreImageFilter: CVPixelBufferModifying {
+open class CoreImageFilter: CVPixelBufferModifying, @unchecked Sendable {
 
   private lazy var ciContext = MTLCreateSystemDefaultDevice()
     .map {

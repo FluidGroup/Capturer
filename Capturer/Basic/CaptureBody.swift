@@ -14,6 +14,8 @@ public final class CaptureBodyWrapper: @unchecked Sendable {
 
       public var sessionPreset: AVCaptureSession.Preset = .photo
 
+      public var enableMultitaskingCameraAccessIfSupported: Bool = false
+        
       public init() {
 
       }
@@ -63,6 +65,10 @@ public final class CaptureBodyWrapper: @unchecked Sendable {
       self.session.performConfiguration {
         $0.sessionPreset = configuration.sessionPreset
         $0.automaticallyConfiguresCaptureDeviceForWideColor = true
+          if configuration.enableMultitaskingCameraAccessIfSupported,
+             $0.isMultitaskingCameraAccessSupported {
+              $0.isMultitaskingCameraAccessEnabled = true
+          }
       }
 
     }

@@ -32,14 +32,15 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
 
     subscription?.cancel()
 
-    Task {
-      subscription = await output
+    Task { [weak self] in
+      let subscription = await output
         .pixelBufferBus
-        .addHandler { [unowned self] pixelBuffer in
-          Task {
-            await self.input(pixelBuffer: pixelBuffer)
+        .addHandler { [weak self] pixelBuffer in
+          Task { @MainActor in
+            self?.input(pixelBuffer: pixelBuffer)
           }
         }
+      self?.subscription = subscription
     }
   }
 

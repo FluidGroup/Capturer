@@ -32,6 +32,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
   }
 
   private let _output = AVCapturePhotoOutput()
+  public var avCapturePhotoOutput: AVCapturePhotoOutput { _output }
 
   public init(quality: AVCapturePhotoOutput.QualityPrioritization = .balanced) {
     super.init()
