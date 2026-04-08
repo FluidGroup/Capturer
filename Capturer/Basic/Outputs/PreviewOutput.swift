@@ -36,6 +36,13 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
   public private(set) var state: State = .init()
 
+  /// Rotation coordinator that reports the correct rotation angle for the current
+  /// physical device orientation. iOS 17+. Held as `AnyObject` so the property
+  /// declaration doesn't need an availability annotation.
+  private var rotationCoordinator: AnyObject?
+  private var rotationObservation: NSKeyValueObservation?
+  private weak var rotationConnection: AVCaptureConnection?
+
   open override func didChange(connections: [AVCaptureConnection]) {
 
     assert(connections.count <= 1)
@@ -57,14 +64,31 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
       }
       .first
 
-    // TODO: handles connections with better way
+    // Tear down any prior rotation observation before reconfiguring.
+    rotationObservation?.invalidate()
+    rotationObservation = nil
+    rotationCoordinator = nil
+    rotationConnection = nil
+
     if let connection = proposedConnection {
-      // For the rear camera in portrait, the correct rotation angle is 90°.
-      // The previous value of 270° was portrait-upside-down and produced a sideways preview.
-      if #available(iOS 17.0, *) {
-        let portraitAngle: CGFloat = 90
-        if connection.isVideoRotationAngleSupported(portraitAngle) {
-          connection.videoRotationAngle = portraitAngle
+      // Track the device's physical rotation via AVCaptureDeviceRotationCoordinator
+      // (iOS 17+). This replaces the deprecated `videoOrientation = .portrait`
+      // path and works correctly across iPhone/iPad orientations.
+      if #available(iOS 17.0, *),
+         let device = (connection.inputPorts.first?.input as? AVCaptureDeviceInput)?.device {
+        let coordinator = AVCaptureDeviceRotationCoordinator(device: device, previewLayer: nil)
+        rotationCoordinator = coordinator
+        rotationConnection = connection
+
+        applyRotationAngle(coordinator.videoRotationAngleForHorizonLevelPreview, to: connection)
+
+        rotationObservation = coordinator.observe(
+          \.videoRotationAngleForHorizonLevelPreview,
+          options: [.new]
+        ) { [weak self] _, change in
+          guard let newAngle = change.newValue,
+                let connection = self?.rotationConnection else { return }
+          self?.applyRotationAngle(newAngle, to: connection)
         }
       } else {
         connection.videoOrientation = .portrait
@@ -80,6 +104,12 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
       self.state.inputInfo = nil
     }
 
+  }
+
+  private func applyRotationAngle(_ angle: CGFloat, to connection: AVCaptureConnection) {
+    if connection.isVideoRotationAngleSupported(angle) {
+      connection.videoRotationAngle = angle
+    }
   }
 
 }
