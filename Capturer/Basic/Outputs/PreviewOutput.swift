@@ -59,11 +59,12 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
     // TODO: handles connections with better way
     if let connection = proposedConnection {
+      // For the rear camera in portrait, the correct rotation angle is 90°.
+      // The previous value of 270° was portrait-upside-down and produced a sideways preview.
       if #available(iOS 17.0, *) {
-        let headingOffset: CGFloat = 270
-        let radians: CGFloat = headingOffset * .pi / 180.0
-        if connection.isVideoRotationAngleSupported(radians) {
-          connection.videoRotationAngle = radians
+        let portraitAngle: CGFloat = 90
+        if connection.isVideoRotationAngleSupported(portraitAngle) {
+          connection.videoRotationAngle = portraitAngle
         }
       } else {
         connection.videoOrientation = .portrait
