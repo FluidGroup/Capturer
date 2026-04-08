@@ -76,7 +76,7 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
       // path and works correctly across iPhone/iPad orientations.
       if #available(iOS 17.0, *),
          let device = (connection.inputPorts.first?.input as? AVCaptureDeviceInput)?.device {
-        let coordinator = AVCaptureDeviceRotationCoordinator(device: device, previewLayer: nil)
+        let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
         rotationCoordinator = coordinator
         rotationConnection = connection
 
@@ -106,6 +106,7 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
   }
 
+  @available(iOS 17.0, *)
   private func applyRotationAngle(_ angle: CGFloat, to connection: AVCaptureConnection) {
     if connection.isVideoRotationAngleSupported(angle) {
       connection.videoRotationAngle = angle
