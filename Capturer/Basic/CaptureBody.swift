@@ -50,7 +50,13 @@ public final class CaptureBodyWrapper: @unchecked Sendable {
 
     public var handlers: Handlers = .init()
 
-    private let session: AVCaptureSession = .init()
+    /// The underlying `AVCaptureSession`.
+    ///
+    /// Exposed so SwiftUI preview views (e.g. `CapturePreviewView`) can
+    /// attach an `AVCaptureVideoPreviewLayer` directly to the session.
+    /// `AVCaptureSession` is internally thread-safe via `beginConfiguration` /
+    /// `commitConfiguration`, so nonisolated sharing is safe.
+    public nonisolated(unsafe) let session: AVCaptureSession = .init()
     private var inputNode: InputNodeType?
     private var outputNodes: [OutputNodeType] = []
 
@@ -173,6 +179,11 @@ public final class CaptureBodyWrapper: @unchecked Sendable {
 
     }
 
+  }
+
+  /// The underlying `AVCaptureSession`. See `CaptureBody.session`.
+  public var session: AVCaptureSession {
+    wrappedCaptureBody.session
   }
 
   // Boilerplate wrapping:

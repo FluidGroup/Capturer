@@ -16,6 +16,7 @@
 		4B0ED6DD253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */; };
 		4B0ED6E0253AE2670012ADE6 /* CoreImageFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0ED6DF253AE2670012ADE6 /* CoreImageFilter.swift */; };
 		4B1DF6A02534A40300503E16 /* PixelBufferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1DF69F2534A40300503E16 /* PixelBufferView.swift */; };
+		4BCAFE0000000000000A0001 /* CapturePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCAFE0000000000000A0002 /* CapturePreviewView.swift */; };
 		4B293EE02534A14B0057EF46 /* InputNodeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B293EDF2534A14B0057EF46 /* InputNodeType.swift */; };
 		4B2A5ABF26FB82850072A253 /* Orientations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2A5ABE26FB82850072A253 /* Orientations.swift */; };
 		4B2D586225346C410080E958 /* ComponentCamera.h in Headers */ = {isa = PBXBuildFile; fileRef = 4B2D586025346C410080E958 /* ComponentCamera.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -106,6 +107,7 @@
 		4B0ED6DC253AE1910012ADE6 /* AnyCVPixelBufferOutput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCVPixelBufferOutput.swift; sourceTree = "<group>"; };
 		4B0ED6DF253AE2670012ADE6 /* CoreImageFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageFilter.swift; sourceTree = "<group>"; };
 		4B1DF69F2534A40300503E16 /* PixelBufferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBufferView.swift; sourceTree = "<group>"; };
+		4BCAFE0000000000000A0002 /* CapturePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePreviewView.swift; sourceTree = "<group>"; };
 		4B293EDF2534A14B0057EF46 /* InputNodeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputNodeType.swift; sourceTree = "<group>"; };
 		4B2A5ABE26FB82850072A253 /* Orientations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Orientations.swift; sourceTree = "<group>"; };
 		4B2D585D25346C410080E958 /* Capturer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Capturer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -186,6 +188,7 @@
 			children = (
 				4B9077CC26FB0C43008BF843 /* PixelBufferDisplaying.swift */,
 				4B1DF69F2534A40300503E16 /* PixelBufferView.swift */,
+				4BCAFE0000000000000A0002 /* CapturePreviewView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -499,6 +502,7 @@
 				4B99BC0E26FB74C100CA722C /* PreviewOutput.swift in Sources */,
 				4B0ED6E0253AE2670012ADE6 /* CoreImageFilter.swift in Sources */,
 				4B1DF6A02534A40300503E16 /* PixelBufferView.swift in Sources */,
+				4BCAFE0000000000000A0001 /* CapturePreviewView.swift in Sources */,
 				4B9077CF26FB0C5F008BF843 /* CoreImagePixelBufferView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
