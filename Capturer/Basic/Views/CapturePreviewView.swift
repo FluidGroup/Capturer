@@ -53,9 +53,15 @@ public struct CapturePreviewView: UIViewRepresentable {
         private var rotationObservation: NSKeyValueObservation?
         private var inputsObservation: NSKeyValueObservation?
 
+        /// Identifies the current attachment, so a device lookup still in flight when the
+        /// view is detached (or re-attached) is discarded rather than wiring a stale
+        /// device to whatever layer happens to be current by the time it lands.
+        private var wiringGeneration: UInt64 = 0
+
         func attach(view: _CapturePreviewUIView, session: AVCaptureSession) {
             self.view = view
             self.session = session
+            wiringGeneration &+= 1
             wireRotationIfPossible()
             inputsObservation = session.observe(
                 \.inputs,
@@ -68,6 +74,7 @@ public struct CapturePreviewView: UIViewRepresentable {
         }
 
         func detach() {
+            wiringGeneration &+= 1
             rotationObservation?.invalidate()
             rotationObservation = nil
             inputsObservation?.invalidate()
@@ -79,13 +86,45 @@ public struct CapturePreviewView: UIViewRepresentable {
 
         private func wireRotationIfPossible() {
             guard rotationCoordinator == nil,
-                  let view,
+                  view != nil,
                   let session
             else { return }
-            let device = session.inputs
-                .compactMap { ($0 as? AVCaptureDeviceInput)?.device }
-                .first
-            guard let device else { return }
+
+            let boxedSession = UncheckedSendable(session)
+            let generation = wiringGeneration
+
+            // `AVCaptureSession.inputs` acquires the session's lock, and a background
+            // reconfiguration holds that lock for the whole of its
+            // beginConfiguration/commitConfiguration block. Reading it off the main actor
+            // keeps the main thread out of that lock entirely: taking it here on main was
+            // one half of a deadlock against a session being configured from a background
+            // task, and even with the other half fixed it stalls the UI for the length of
+            // a reconfiguration.
+            Task.detached { [weak self] in
+                let device = Self.firstVideoDevice(in: boxedSession)
+                await self?.finishWiring(with: device, generation: generation)
+            }
+        }
+
+        private nonisolated static func firstVideoDevice(
+            in session: UncheckedSendable<AVCaptureSession>
+        ) -> UncheckedSendable<AVCaptureDevice?> {
+            UncheckedSendable(
+                session.wrapped.inputs
+                    .compactMap { ($0 as? AVCaptureDeviceInput)?.device }
+                    .first
+            )
+        }
+
+        private func finishWiring(
+            with device: UncheckedSendable<AVCaptureDevice?>,
+            generation: UInt64
+        ) {
+            guard generation == wiringGeneration,
+                  rotationCoordinator == nil,
+                  let device = device.wrapped,
+                  let view
+            else { return }
 
             let layer = view.previewLayer
             let coordinator = AVCaptureDevice.RotationCoordinator(

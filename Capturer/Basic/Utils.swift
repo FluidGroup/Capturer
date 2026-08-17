@@ -10,6 +10,22 @@ enum Utils {
 
 }
 
+/// Carries a value that is not statically `Sendable` across an isolation boundary.
+///
+/// AVFoundation's capture types (`AVCaptureSession`, `AVCaptureDevice`,
+/// `AVCaptureConnection`) are documented as usable from any thread but are not annotated
+/// `Sendable`. Where this package deliberately hands one to another executor, this box
+/// states that intent at the point of use and confines the exemption to the single value
+/// being passed, instead of weakening an entire file with `@preconcurrency import`.
+struct UncheckedSendable<Wrapped>: @unchecked Sendable {
+
+  let wrapped: Wrapped
+
+  init(_ wrapped: Wrapped) {
+    self.wrapped = wrapped
+  }
+}
+
 extension CMSampleBuffer {
 
   @inline(__always)
