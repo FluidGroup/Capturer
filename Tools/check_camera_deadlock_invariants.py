@@ -21,6 +21,10 @@ A. PreviewOutput must never construct a RotationCoordinator synchronously inside
    didChange(connections:). It must hop to the main actor first.
 B. CapturePreviewView must never read `AVCaptureSession.inputs` from main-actor-isolated
    code; the read has to happen off the main actor.
+C. PreviewOutput must never invalidate a KVO observation while holding `rotationLock`.
+   `NSKeyValueObservation.invalidate()` calls `removeObserver`, which blocks until a
+   notification already in flight for that object returns — and that notification's block
+   takes `rotationLock`. Doing both at once reproduces the same deadlock one level down.
 
 Run:  python3 Tools/check_camera_deadlock_invariants.py [repo-root]
 Exit: 0 if both invariants hold, 1 otherwise.
@@ -107,6 +111,38 @@ def check_preview_output(root):
     return problems
 
 
+def check_no_invalidate_under_lock(root):
+    """Invariant C: no `.invalidate()` inside a `withLock { ... }` block."""
+    path = root / PREVIEW_OUTPUT
+    if not path.exists():
+        return [f"missing file: {PREVIEW_OUTPUT}"]
+
+    lines = [strip_comment(l) for l in path.read_text().splitlines()]
+    problems = []
+    depth = 0
+    lock_line = None
+
+    for index, line in enumerate(lines):
+        if lock_line is None and "withLock" in line:
+            lock_line = index
+            depth = 0
+
+        if lock_line is not None:
+            depth += line.count("{") - line.count("}")
+            if ".invalidate()" in line:
+                problems.append(
+                    f"{PREVIEW_OUTPUT}:{index + 1}: invalidate() is called while holding "
+                    f"rotationLock (opened at line {lock_line + 1}). removeObserver blocks "
+                    f"on an in-flight KVO notification whose block takes that same lock — "
+                    f"this deadlocks. Swap the observation out under the lock and "
+                    f"invalidate it after releasing."
+                )
+            if depth <= 0 and index > lock_line:
+                lock_line = None
+
+    return problems
+
+
 def check_preview_view(root):
     path = root / PREVIEW_VIEW
     if not path.exists():
@@ -139,7 +175,11 @@ def check_preview_view(root):
 
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
-    problems = check_preview_output(root) + check_preview_view(root)
+    problems = (
+        check_preview_output(root)
+        + check_preview_view(root)
+        + check_no_invalidate_under_lock(root)
+    )
 
     if problems:
         print(f"FAIL — camera deadlock invariants violated in {root}:")
@@ -150,6 +190,7 @@ def main():
     print(f"PASS — camera deadlock invariants hold in {root}")
     print("  A. RotationCoordinator is only built after a main-actor hop.")
     print("  B. AVCaptureSession.inputs is never read from main-actor isolated code.")
+    print("  C. No KVO observation is invalidated while rotationLock is held.")
     return 0
 
 

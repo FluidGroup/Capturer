@@ -95,11 +95,10 @@ public struct CapturePreviewView: UIViewRepresentable {
 
             // `AVCaptureSession.inputs` acquires the session's lock, and a background
             // reconfiguration holds that lock for the whole of its
-            // beginConfiguration/commitConfiguration block. Reading it off the main actor
-            // keeps the main thread out of that lock entirely: taking it here on main was
-            // one half of a deadlock against a session being configured from a background
-            // task, and even with the other half fixed it stalls the UI for the length of
-            // a reconfiguration.
+            // beginConfiguration/commitConfiguration block. Resolving the device off the
+            // main actor keeps the main thread out of that lock entirely, so the UI never
+            // stalls for the length of a reconfiguration and can never be the main-queue
+            // half of a deadlock with a thread that is configuring the session.
             Task.detached { [weak self] in
                 let device = Self.firstVideoDevice(in: boxedSession)
                 await self?.finishWiring(with: device, generation: generation)

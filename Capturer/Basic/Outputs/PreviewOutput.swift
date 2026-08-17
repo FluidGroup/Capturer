@@ -77,14 +77,24 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
     // Tear down any prior rotation observation before reconfiguring, and claim the
     // generation that the resulting coordinator must still match to be installed.
-    let generation = rotationLock.withLock { () -> UInt64 in
-      rotationObservation?.invalidate()
+    //
+    // The observation is handed back out and invalidated *after* the lock is released.
+    // `invalidate()` calls `removeObserver`, which blocks until any notification already
+    // in flight for that coordinator finishes — and that notification's block takes this
+    // same lock to resolve its connection. Invalidating while holding the lock would
+    // deadlock the two against each other. Clearing the state and bumping the generation
+    // is enough on its own: an in-flight block finds a generation mismatch and does
+    // nothing.
+    let (previousObservation, generation) = rotationLock.withLock {
+      () -> (NSKeyValueObservation?, UInt64) in
+      let previous = rotationObservation
       rotationObservation = nil
       rotationCoordinator = nil
       rotationConnection = nil
       rotationGeneration &+= 1
-      return rotationGeneration
+      return (previous, rotationGeneration)
     }
+    previousObservation?.invalidate()
 
     if let connection = proposedConnection,
        let device = (connection.inputPorts.first?.input as? AVCaptureDeviceInput)?.device {
