@@ -11,19 +11,41 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
 
     public struct CapturePhoto: Sendable {
 
-    public let photo: AVCapturePhoto
+    /// The captured photo.
+    ///
+    /// Typed as `CapturedPhotoRepresentable` rather than `AVCapturePhoto` so a photo that did not
+    /// come from a camera can stand in — see that protocol. `AVCapturePhoto` conforms, so
+    /// existing callers reaching through this for `fileDataRepresentation()` are unaffected.
+    public let photo: any CapturedPhotoRepresentable
 
+    public init(photo: any CapturedPhotoRepresentable) {
+      self.photo = photo
+    }
+
+    /// The orientation the photo should be displayed at.
+    ///
+    /// Falls back to `.up` rather than trapping when metadata carries no orientation. The forced
+    /// unwraps this replaces were safe only because AVFoundation always sets the key; a
+    /// conformance that forgot it would have crashed the app rather than shown a rotated image.
     public var orientation: CGImagePropertyOrientation {
-      let orientationValue = photo.metadata[String(kCGImagePropertyOrientation)] as! NSNumber
-      return CGImagePropertyOrientation(rawValue: orientationValue.uint32Value)!
+      guard
+        let orientationValue = photo.metadata[String(kCGImagePropertyOrientation)] as? NSNumber,
+        let orientation = CGImagePropertyOrientation(rawValue: orientationValue.uint32Value)
+      else {
+        return .up
+      }
+      return orientation
     }
 
     /**
      Creates an image from captured data
      */
-    public func makeImage(isMirrored: Bool) -> UIImage {
-      .init(
-        cgImage: photo.cgImageRepresentation()!,
+    public func makeImage(isMirrored: Bool) -> UIImage? {
+      guard let cgImage = photo.cgImageRepresentation() else {
+        return nil
+      }
+      return .init(
+        cgImage: cgImage,
         scale: 1,
         orientation: isMirrored ? orientation.uiImageOrientation.mirrored : orientation.uiImageOrientation
       )
