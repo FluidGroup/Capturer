@@ -50,11 +50,11 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
       Task {
           await delegateProxy.handlers.setDidOutput({ [sampleBufferBus, pixelBufferBus] sampleBuffer in
             Task {
-              await sampleBufferBus.emit(element: sampleBuffer)
-
-              if await pixelBufferBus.hasTargets {
-                await pixelBufferBus.emit(element: sampleBuffer.takeCVPixelBuffer().unsafelyUnwrapped)
-              }
+              await Self.publish(
+                sampleBuffer,
+                sampleBufferBus: sampleBufferBus,
+                pixelBufferBus: pixelBufferBus
+              )
             }
           })
       }
@@ -65,6 +65,39 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
     }
 
     update(with: state, oldState: nil)
+  }
+
+  /// Publishes a frame that did not come from the capture session.
+  ///
+  /// Frames reach subscribers by exactly the same route whether the camera produced them or
+  /// something else did, which is what lets a recorded video stand in for a camera without a
+  /// second pipeline existing alongside the real one. Everything downstream of the buses — the
+  /// preview, filters, the views — consumes `CVPixelBuffer` and has no way to tell, or care.
+  public func emit(sampleBuffer: CMSampleBuffer) {
+    Task { [sampleBufferBus, pixelBufferBus] in
+      await Self.publish(
+        sampleBuffer,
+        sampleBufferBus: sampleBufferBus,
+        pixelBufferBus: pixelBufferBus
+      )
+    }
+  }
+
+  /// The one place a frame becomes an event, whatever produced it.
+  ///
+  /// A sample buffer without an image buffer is skipped rather than force-unwrapped. The camera
+  /// always supplies one, so the previous `unsafelyUnwrapped` never fired — but a frame arriving
+  /// from anywhere else has no such guarantee, and a crash is a poor way to learn that.
+  private static func publish(
+    _ sampleBuffer: CMSampleBuffer,
+    sampleBufferBus: EventBus<CMSampleBuffer>,
+    pixelBufferBus: EventBus<CVPixelBuffer>
+  ) async {
+    await sampleBufferBus.emit(element: sampleBuffer)
+
+    if await pixelBufferBus.hasTargets, let pixelBuffer = sampleBuffer.takeCVPixelBuffer() {
+      await pixelBufferBus.emit(element: pixelBuffer)
+    }
   }
 
   open func didChange(connections: [AVCaptureConnection]) {
