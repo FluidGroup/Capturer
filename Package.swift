@@ -15,5 +15,10 @@ let package = Package(
       dependencies: [],
       path: "Capturer"
     ),
+    .testTarget(
+      name: "CapturerTests",
+      dependencies: ["Capturer"],
+      path: "Tests/CapturerTests"
+    ),
   ]
 )
