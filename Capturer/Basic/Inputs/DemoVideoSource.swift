@@ -132,10 +132,18 @@ public final class DemoVideoSource: @unchecked Sendable {
     }
 
     let settings: [String: Any] = [
-      kCVPixelBufferPixelFormatTypeKey as String: pixelFormat
+      kCVPixelBufferPixelFormatTypeKey as String: pixelFormat,
+      // Without this the decoded buffers are not IOSurface-backed, and `CALayer.contents` — how
+      // the preview draws a frame — silently displays nothing at all. The camera's buffers are
+      // always IOSurface-backed, so this is part of handing downstream the same thing a camera
+      // would have.
+      kCVPixelBufferIOSurfacePropertiesKey as String: [:] as CFDictionary
     ]
     let trackOutput = AVAssetReaderTrackOutput(track: track, outputSettings: settings)
-    trackOutput.alwaysCopiesSampleData = false
+    // Copies, because frames outlive the read: the most recent one is held for a capture to
+    // return, and the preview holds one as layer contents. Reusing the reader's memory under
+    // either of those shows torn or recycled frames.
+    trackOutput.alwaysCopiesSampleData = true
 
     guard reader.canAdd(trackOutput) else {
       Log.error(.capture, "DemoVideoSource could not attach a track output for \(url.lastPathComponent)")
