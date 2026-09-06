@@ -17,7 +17,8 @@ final class DemoCameraTests: XCTestCase {
   // MARK: - Helpers
 
   /// A solid-colour frame, so a test can tell one frame from another by reading a pixel.
-  private func makePixelBuffer(luma: UInt8) throws -> CVPixelBuffer {
+  private func makePixelBuffer(luma: UInt8, size: CGSize? = nil) throws -> CVPixelBuffer {
+    let size = size ?? frameSize
     var buffer: CVPixelBuffer?
     let attributes: [String: Any] = [
       kCVPixelBufferCGImageCompatibilityKey as String: true,
@@ -25,8 +26,8 @@ final class DemoCameraTests: XCTestCase {
     ]
     let status = CVPixelBufferCreate(
       kCFAllocatorDefault,
-      Int(frameSize.width),
-      Int(frameSize.height),
+      Int(size.width),
+      Int(size.height),
       kCVPixelFormatType_32BGRA,
       attributes as CFDictionary,
       &buffer
@@ -47,10 +48,12 @@ final class DemoCameraTests: XCTestCase {
   }
 
   /// Writes a short video of solid frames and returns where it landed.
+  private static let testFrameRate: Double = 30
+
   private func recordTestVideo(frameCount: Int = 12, rotationDegrees: CGFloat = 0) async throws -> URL {
     let url = temporaryURL("demo.mov")
     let recorder = DemoVideoRecorder()
-    try recorder.start(to: url, size: frameSize, rotationDegrees: rotationDegrees)
+    try recorder.start(to: url, size: frameSize, rotationDegrees: rotationDegrees, frameRate: Self.testFrameRate)
 
     for index in 0..<frameCount {
       // Wraps rather than traps past the 22nd frame; the value only needs to differ between
@@ -60,7 +63,7 @@ final class DemoCameraTests: XCTestCase {
       recorder.append(buffer, at: time)
     }
 
-    return try await recorder.finish()
+    return try await recorder.finish().url
   }
 
   // MARK: - PixelBufferCapturedPhoto
@@ -119,13 +122,91 @@ final class DemoCameraTests: XCTestCase {
   func testRecorderRefusesToFinishWithNoFrames() async throws {
     let recorder = DemoVideoRecorder()
     let url = temporaryURL("empty.mov")
-    try recorder.start(to: url, size: frameSize)
+    try recorder.start(to: url, size: frameSize, frameRate: Self.testFrameRate)
 
     do {
       _ = try await recorder.finish()
       XCTFail("finishing with no frames should throw rather than produce an unreadable file")
     } catch {
       // expected
+    }
+  }
+
+  /// A repeated or earlier presentation time is accepted by the writer and then fails the whole
+  /// file when it is finished. The recorder must drop that frame instead and keep the rest.
+  func testRecorderDropsFramesWhoseTimeDoesNotAdvance() async throws {
+    let url = temporaryURL("time.mov")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let recorder = DemoVideoRecorder()
+    try recorder.start(to: url, size: frameSize, frameRate: Self.testFrameRate)
+
+    for index in 0..<6 {
+      recorder.append(try makePixelBuffer(luma: 60), at: CMTime(value: CMTimeValue(index), timescale: 30))
+    }
+    // A repeat of the last time, then a step backwards, then the clock resumes.
+    recorder.append(try makePixelBuffer(luma: 70), at: CMTime(value: 5, timescale: 30))
+    recorder.append(try makePixelBuffer(luma: 80), at: CMTime(value: 2, timescale: 30))
+    recorder.append(try makePixelBuffer(luma: 90), at: CMTime(value: 6, timescale: 30))
+
+    let recording = try await recorder.finish()
+    XCTAssertEqual(recording.frameCount, 7)
+    XCTAssertEqual(recording.droppedFrames.unusableTime, 2)
+    XCTAssertEqual(recording.droppedFrames.total, 2)
+    XCTAssertTrue(FileManager.default.fileExists(atPath: recording.url.path))
+  }
+
+  /// The writer scales and crops a frame of the wrong size without complaint; the recorder must
+  /// refuse it so the file only ever holds what the camera produced.
+  func testRecorderDropsFramesOfTheWrongSize() async throws {
+    let url = temporaryURL("size.mov")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let recorder = DemoVideoRecorder()
+    try recorder.start(to: url, size: frameSize, frameRate: Self.testFrameRate)
+
+    recorder.append(try makePixelBuffer(luma: 60), at: CMTime(value: 0, timescale: 30))
+    recorder.append(
+      try makePixelBuffer(luma: 70, size: CGSize(width: 640, height: 480)),
+      at: CMTime(value: 1, timescale: 30)
+    )
+    recorder.append(try makePixelBuffer(luma: 80), at: CMTime(value: 2, timescale: 30))
+
+    let recording = try await recorder.finish()
+    XCTAssertEqual(recording.frameCount, 2)
+    XCTAssertEqual(recording.droppedFrames.sizeMismatch, 1)
+    XCTAssertEqual(recording.droppedFrames.total, 1)
+  }
+
+  /// A non-positive rate would become a zero bit rate, which AVFoundation answers with an
+  /// Objective-C exception rather than an error. It has to be refused before that point.
+  func testRecorderRejectsAnUnusableFrameRate() {
+    for frameRate in [0.0, -30.0, .nan, .infinity] {
+      let recorder = DemoVideoRecorder()
+      do {
+        try recorder.start(to: temporaryURL("rate.mov"), size: frameSize, frameRate: frameRate)
+        XCTFail("frame rate \(frameRate) should be refused")
+      } catch DemoVideoRecorder.Error.invalidFrameRate {
+        // As specified.
+      } catch {
+        XCTFail("frame rate \(frameRate) failed with the wrong error: \(error)")
+      }
+    }
+  }
+
+  /// A writer that cannot start still reports its input as ready and refuses every frame, so
+  /// without checking at `start` the failure would surface at `finish` as "nothing recorded".
+  func testRecorderReportsAnUnwritableDestinationAtStart() {
+    let url = temporaryURL("missing-directory-\(UUID().uuidString)")
+      .appendingPathComponent("demo.mov")
+    let recorder = DemoVideoRecorder()
+    do {
+      try recorder.start(to: url, size: frameSize, frameRate: Self.testFrameRate)
+      XCTFail("a destination in a missing directory should be refused at start")
+    } catch DemoVideoRecorder.Error.couldNotStartWriting {
+      // As specified.
+    } catch DemoVideoRecorder.Error.couldNotCreateWriter {
+      // Also acceptable: some releases refuse the URL at construction instead.
+    } catch {
+      XCTFail("wrong error: \(error)")
     }
   }
 
