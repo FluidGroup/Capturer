@@ -35,8 +35,7 @@ public final class DemoVideoRecorder: @unchecked Sendable {
   /// camera frame is around 15 Mbps — a minute of that is over a hundred megabytes, for footage
   /// whose entire purpose is to be committed alongside an app as a development aid. Scaled by
   /// pixel count rather than fixed, so it stays sane whatever the camera hands over.
-  private static func bitRate(for size: CGSize) -> Int {
-    let framesPerSecond = 30.0
+  private static func bitRate(for size: CGSize, framesPerSecond: Double) -> Int {
     // Comfortably above where H.264 shows artefacts on camera footage, and roughly a fifth of the
     // default. Chosen against real recordings rather than derived.
     let bitsPerPixel = 0.05
@@ -53,7 +52,15 @@ public final class DemoVideoRecorder: @unchecked Sendable {
   ///     live capture and risk dropping them, and the file would stop saying what the camera
   ///     actually produced. `DemoVideoSource` applies it on the way out, where the cost does not
   ///     matter and one place serves the preview and the shutter alike. Zero records no rotation.
-  public func start(to url: URL, size: CGSize, rotationDegrees: CGFloat = 0) throws {
+  ///   - frameRate: The rate the frames will arrive at. Sizes the bit rate — the same footage at
+  ///     twice the frame rate needs twice the bits to look the same — and tells the encoder what
+  ///     to expect.
+  public func start(
+    to url: URL,
+    size: CGSize,
+    rotationDegrees: CGFloat = 0,
+    frameRate: Double = 30
+  ) throws {
     lock.lock()
     defer { lock.unlock() }
 
@@ -70,7 +77,8 @@ public final class DemoVideoRecorder: @unchecked Sendable {
       AVVideoWidthKey: Int(size.width),
       AVVideoHeightKey: Int(size.height),
       AVVideoCompressionPropertiesKey: [
-        AVVideoAverageBitRateKey: Self.bitRate(for: size)
+        AVVideoAverageBitRateKey: Self.bitRate(for: size, framesPerSecond: frameRate),
+        AVVideoExpectedSourceFrameRateKey: Int(frameRate.rounded())
       ]
     ]
     let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)

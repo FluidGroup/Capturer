@@ -13,40 +13,29 @@ public class AnyCVPixelBufferOutput: PixelBufferOutputNodeType, @unchecked Senda
 
   private var cancellable: EventBusCancellable? = nil
 
-    public init<Filter: CVPixelBufferModifying & Sendable>(
+  public init<Filter: CVPixelBufferModifying & Sendable>(
     upstream: VideoDataOutput,
     filter: Filter
-    ) {
-        self.upstream = upstream
+  ) {
+    self.upstream = upstream
 
-        if (filter is NoPixelBufferModifier) == false {
-          Task {
-            self.cancellable = await upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
-              let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
-              let new = filter.perform(pixelBuffer: pixelBuffer)
-              Task {
-                await pixelBufferBus.emit(element: new)
-              }
-            }
-          }
-        } else {
-          Task {
-            cancellable = await upstream.sampleBufferBus.addHandler { [pixelBufferBus] buffer in
-              let pixelBuffer = CMSampleBufferGetImageBuffer(buffer)!
-              Task {
-                await pixelBufferBus.emit(element: pixelBuffer)
-              }
-            }
-          }
-        }
+    // Runs on the upstream's delivery thread, synchronously, like everything on a bus: the
+    // filter is applied and the result published before the next frame can arrive.
+    let pixelBufferBus = self.pixelBufferBus
+    if filter is NoPixelBufferModifier {
+      cancellable = upstream.sampleBufferBus.addHandler { buffer in
+        guard let pixelBuffer = buffer.takeCVPixelBuffer() else { return }
+        pixelBufferBus.emit(element: pixelBuffer)
+      }
+    } else {
+      cancellable = upstream.sampleBufferBus.addHandler { buffer in
+        guard let pixelBuffer = buffer.takeCVPixelBuffer() else { return }
+        pixelBufferBus.emit(element: filter.perform(pixelBuffer: pixelBuffer))
+      }
     }
+  }
 
-    private func setCancellables(_ cancellables: EventBusCancellable?) {
-        self.cancellable = cancellables
-    }
-
-
-    public convenience init(
+  public convenience init(
     upstream: VideoDataOutput
   ) {
     self.init(upstream: upstream, filter: NoPixelBufferModifier())
@@ -56,7 +45,7 @@ public class AnyCVPixelBufferOutput: PixelBufferOutputNodeType, @unchecked Senda
     cancellable?.cancel()
   }
 
- public func setUp(sessionInConfiguring: AVCaptureSession) {
+  public func setUp(sessionInConfiguring: AVCaptureSession) {
     upstream.setUp(sessionInConfiguring: sessionInConfiguring)
   }
 

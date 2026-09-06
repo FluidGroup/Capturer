@@ -1,6 +1,7 @@
 @preconcurrency import AVFoundation
 @preconcurrency import CoreMedia
 import Foundation
+import QuartzCore
 
 /// Plays recorded video into the capture pipeline in place of a camera.
 ///
@@ -14,6 +15,13 @@ import Foundation
 /// vends. That is the detail that makes the substitution honest: the on-disk codec is irrelevant,
 /// but the buffers handed downstream must be the same shape the camera would have handed over,
 /// or subtle differences appear in filters and rendering.
+///
+/// Playback is `AVPlayer`'s: it keeps the clock, decodes in hardware where there is any, and
+/// loops the videos through a queue. A display link on its own thread asks the player's video
+/// output, once per display refresh, for the frame that belongs to that instant, and publishes
+/// it — so what goes out is always the frame for *now*, never a backlog of frames for then. A
+/// consumer that cannot keep up costs frames, the same as it would with a camera, and nothing
+/// else.
 public final class DemoVideoSource: @unchecked Sendable {
 
   public enum Error: Swift.Error {
@@ -25,18 +33,41 @@ public final class DemoVideoSource: @unchecked Sendable {
     case couldNotReadVideo(URL)
   }
 
-  /// Videos to play, in order.
-  private let videoURLs: [URL]
+  /// A video read once, ready to be played any number of times.
+  private struct PreparedVideo {
+    let asset: AVURLAsset
+    /// Applies the track's `preferredTransform` to the frames themselves.
+    ///
+    /// A camera records in the sensor's own landscape orientation and it is the preview layer
+    /// that turns the picture upright — and that layer is not in this path. Frames straight off
+    /// the track are sideways for every consumer: the preview, and the shutter, which returns the
+    /// buffer rather than anything the preview did to it. Rotating here is the one place that
+    /// fixes both, and it is the same rotation the file already carries.
+    let composition: AVVideoComposition
+    let renderSize: CGSize
+    let nominalFrameRate: Float
+  }
+
+  /// One video in the player's queue, and the output its frames are read from.
+  private struct QueuedVideo {
+    let item: AVPlayerItem
+    let output: AVPlayerItemVideoOutput
+    let renderSize: CGSize
+  }
+
+  private let videos: [PreparedVideo]
   private let pixelFormat: OSType
-  private let queue = DispatchQueue(label: "Capturer.DemoVideoSource")
 
   private let lock = NSLock()
-  private var currentIndex = 0
-  private var reader: AVAssetReader?
-  private var trackOutput: AVAssetReaderVideoCompositionOutput?
   private var isRunning = false
-  private var timer: DispatchSourceTimer?
+  private var player: AVQueuePlayer?
+  /// In playback order: the video playing, then the one after it.
+  private var queued: [QueuedVideo] = []
+  private var nextVideoIndex = 0
+  private var endObserver: (any NSObjectProtocol)?
+  private var frameThread: FrameThread?
   private var _latestPixelBuffer: CVPixelBuffer?
+  private var _naturalSize: CGSize
 
   /// The frame most recently published.
   ///
@@ -48,27 +79,60 @@ public final class DemoVideoSource: @unchecked Sendable {
     return _latestPixelBuffer
   }
 
-  /// The natural size of the video being played, for callers that need to report an aspect ratio
-  /// the way `PreviewOutput` reports the camera's.
-  public private(set) var naturalSize: CGSize = .zero
+  /// The size of the frames being published — the video's, once its rotation has been applied —
+  /// for callers that need to report an aspect ratio the way `PreviewOutput` reports the camera's.
+  public var naturalSize: CGSize {
+    lock.lock()
+    defer { lock.unlock() }
+    return _naturalSize
+  }
 
+  private init(videos: [PreparedVideo], pixelFormat: OSType) {
+    self.videos = videos
+    self.pixelFormat = pixelFormat
+    self._naturalSize = videos[0].renderSize
+  }
+
+  deinit {
+    stop()
+  }
+
+  /// Reads the videos and returns a source ready to play them.
+  ///
   /// - Parameters:
   ///   - videoURLs: Played in order, looping back to the first after the last. Passing a single
   ///     URL loops that one.
   ///   - pixelFormat: Defaults to `kCVPixelFormatType_32BGRA`, matching a default
   ///     `AVCaptureVideoDataOutput`.
-  public init(
+  public static func prepare(
     videoURLs: [URL],
     pixelFormat: OSType = kCVPixelFormatType_32BGRA
-  ) throws {
+  ) async throws -> DemoVideoSource {
     guard !videoURLs.isEmpty else {
       throw Error.noVideosAvailable
     }
-    for url in videoURLs where !FileManager.default.fileExists(atPath: url.path) {
-      throw Error.videoNotFound(url)
+
+    var videos: [PreparedVideo] = []
+    for url in videoURLs {
+      guard FileManager.default.fileExists(atPath: url.path) else {
+        throw Error.videoNotFound(url)
+      }
+      let asset = AVURLAsset(url: url)
+      // A recording has one video track; a file with several would be something other than a
+      // recording, and the first is still the one a player would show.
+      guard let track = try await asset.loadTracks(withMediaType: .video).first else {
+        throw Error.couldNotReadVideo(url)
+      }
+      let nominalFrameRate = try await track.load(.nominalFrameRate)
+      let composition = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
+      videos.append(PreparedVideo(
+        asset: asset,
+        composition: composition,
+        renderSize: composition.renderSize,
+        nominalFrameRate: nominalFrameRate
+      ))
     }
-    self.videoURLs = videoURLs
-    self.pixelFormat = pixelFormat
+    return DemoVideoSource(videos: videos, pixelFormat: pixelFormat)
   }
 
   /// Every `demo_video_<n>` in a bundle, in ascending order of `n`.
@@ -93,7 +157,7 @@ public final class DemoVideoSource: @unchecked Sendable {
     return urls
   }
 
-  /// Starts publishing frames into `output`.
+  /// Starts publishing frames into `output`, on the display's cadence, from a thread of its own.
   public func start(feeding output: VideoDataOutput) {
     lock.lock()
     guard !isRunning else {
@@ -101,132 +165,178 @@ public final class DemoVideoSource: @unchecked Sendable {
       return
     }
     isRunning = true
+
+    let player = AVQueuePlayer()
+    // Local files: there is nothing to buffer for, and waiting would only delay the first frame.
+    player.automaticallyWaitsToMinimizeStalling = false
+    player.actionAtItemEnd = .advance
+    self.player = player
+
+    // Two videos queued at all times — the one playing and the one after it — so the hand-over
+    // is seamless and a single video simply follows itself.
+    enqueueNextVideo(into: player)
+    enqueueNextVideo(into: player)
+
+    endObserver = NotificationCenter.default.addObserver(
+      forName: AVPlayerItem.didPlayToEndTimeNotification,
+      object: nil,
+      queue: nil
+    ) { [weak self] notification in
+      guard let item = notification.object as? AVPlayerItem else { return }
+      self?.videoDidEnd(item)
+    }
+
+    // The highest rate among the videos, so a 60 fps recording is shown at 60 even when queued
+    // behind a 30 fps one; a video with fewer frames than refreshes simply has no new frame to
+    // give on some ticks.
+    let preferredFrameRate = videos.map(\.nominalFrameRate).max() ?? 30
+    let thread = FrameThread(preferredFrameRate: preferredFrameRate) { [weak self] hostTime in
+      self?.publishFrame(at: hostTime, into: output)
+    }
+    frameThread = thread
     lock.unlock()
 
-    queue.async { [weak self] in
-      self?.beginReading(startingAt: 0, output: output)
-    }
+    thread.start()
+    player.play()
   }
 
   public func stop() {
     lock.lock()
     isRunning = false
-    timer?.cancel()
-    timer = nil
-    reader?.cancelReading()
-    reader = nil
-    trackOutput = nil
+    let thread = frameThread
+    frameThread = nil
+    let player = self.player
+    self.player = nil
+    queued.removeAll()
+    if let endObserver {
+      NotificationCenter.default.removeObserver(endObserver)
+    }
+    endObserver = nil
     lock.unlock()
+
+    thread?.stop()
+    player?.pause()
+    player?.removeAllItems()
   }
 
-  private func beginReading(startingAt index: Int, output: VideoDataOutput) {
-    let url = videoURLs[index % videoURLs.count]
-    let asset = AVURLAsset(url: url)
+  /// Appends the next video to the player. Called with the lock held.
+  private func enqueueNextVideo(into player: AVQueuePlayer) {
+    let video = videos[nextVideoIndex % videos.count]
+    nextVideoIndex += 1
 
-    guard
-      let track = asset.tracks(withMediaType: .video).first,
-      let reader = try? AVAssetReader(asset: asset)
-    else {
-      Log.error(.capture, "DemoVideoSource could not read \(url.lastPathComponent)")
-      return
-    }
-
-    let settings: [String: Any] = [
+    // A fresh item each time: a player item plays once, so looping means a new item for the same
+    // asset, which is what the prepared asset is kept for.
+    let item = AVPlayerItem(asset: video.asset)
+    item.videoComposition = video.composition
+    let output = AVPlayerItemVideoOutput(pixelBufferAttributes: [
       kCVPixelBufferPixelFormatTypeKey as String: pixelFormat,
-      // Without this the decoded buffers are not IOSurface-backed, and `CALayer.contents` — how
-      // the preview draws a frame — silently displays nothing at all. The camera's buffers are
-      // always IOSurface-backed, so this is part of handing downstream the same thing a camera
-      // would have.
+      // Without this the buffers are not IOSurface-backed, and `CALayer.contents` — how a preview
+      // draws a frame — silently displays nothing at all. The camera's buffers are always
+      // IOSurface-backed, so this is part of handing downstream the same thing a camera would.
       kCVPixelBufferIOSurfacePropertiesKey as String: [:] as CFDictionary
-    ]
+    ])
+    item.add(output)
 
-    // Read through a video composition rather than straight off the track, so the track's
-    // `preferredTransform` is applied to the frames themselves.
-    //
-    // A camera records in the sensor's own landscape orientation and it is the preview layer that
-    // turns the picture upright — and that layer is not in this path. Reading the track directly
-    // handed every consumer sideways frames: the preview drew them sideways, and so did a capture,
-    // because the shutter returns the buffer rather than anything the preview did to it. Rotating
-    // here is the one place that fixes both, and it is the same rotation the file already carries.
-    let composition = AVMutableVideoComposition(propertiesOf: asset)
-    let trackOutput = AVAssetReaderVideoCompositionOutput(videoTracks: [track], videoSettings: settings)
-    trackOutput.videoComposition = composition
-    // Copies, because frames outlive the read: the most recent one is held for a capture to
-    // return, and the preview holds one as layer contents. Reusing the reader's memory under
-    // either of those shows torn or recycled frames.
-    trackOutput.alwaysCopiesSampleData = true
-
-    guard reader.canAdd(trackOutput) else {
-      Log.error(.capture, "DemoVideoSource could not attach a track output for \(url.lastPathComponent)")
-      return
-    }
-    reader.add(trackOutput)
-    guard reader.startReading() else {
-      Log.error(.capture, "DemoVideoSource could not start reading \(url.lastPathComponent)")
-      return
-    }
-
-    let frameRate = track.nominalFrameRate > 0 ? track.nominalFrameRate : 30
-    let interval = 1.0 / Double(frameRate)
-
-    lock.lock()
-    self.reader = reader
-    self.trackOutput = trackOutput
-    self.currentIndex = index
-    // The composition's render size, not the track's natural size: once a quarter-turn has been
-    // applied those differ, and every caller asking for this wants the size of the frames it is
-    // actually being handed.
-    self.naturalSize = composition.renderSize
-    lock.unlock()
-
-    // Paced rather than read-as-fast-as-possible, so the preview moves at the speed it was
-    // recorded at and a capture lands on a frame a person could have chosen.
-    let timer = DispatchSource.makeTimerSource(queue: queue)
-    timer.schedule(deadline: .now(), repeating: interval)
-    timer.setEventHandler { [weak self] in
-      guard let self else { return }
-      self.readNextFrame(into: output, index: index)
-    }
-
-    lock.lock()
-    self.timer?.cancel()
-    self.timer = timer
-    lock.unlock()
-
-    timer.resume()
+    queued.append(QueuedVideo(item: item, output: output, renderSize: video.renderSize))
+    player.insert(item, after: nil)
   }
 
-  private func readNextFrame(into output: VideoDataOutput, index: Int) {
+  private func videoDidEnd(_ item: AVPlayerItem) {
+    lock.lock()
+    defer { lock.unlock() }
+    guard isRunning, let player, let index = queued.firstIndex(where: { $0.item === item }) else {
+      return
+    }
+    queued.remove(at: index)
+    enqueueNextVideo(into: player)
+  }
+
+  /// Publishes the frame that belongs to `hostTime`, if there is a new one. On the frame thread.
+  private func publishFrame(at hostTime: CFTimeInterval, into output: VideoDataOutput) {
     lock.lock()
     let running = isRunning
-    let currentOutput = trackOutput
+    let candidates = queued
     lock.unlock()
+    guard running else { return }
 
-    guard running, let currentOutput else { return }
+    // The video playing is first in the queue; the one after it is asked too, because the player
+    // moves on to it a moment before the end of the first is reported.
+    for video in candidates {
+      let itemTime = video.output.itemTime(forHostTime: hostTime)
+      guard video.output.hasNewPixelBuffer(forItemTime: itemTime),
+            let pixelBuffer = video.output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil)
+      else {
+        continue
+      }
 
-    guard let sampleBuffer = currentOutput.copyNextSampleBuffer() else {
-      // End of this video: move to the next, wrapping at the end so playback never stops.
       lock.lock()
-      timer?.cancel()
-      timer = nil
-      reader?.cancelReading()
-      reader = nil
-      trackOutput = nil
+      _latestPixelBuffer = pixelBuffer
+      _naturalSize = video.renderSize
       lock.unlock()
 
-      let next = (index + 1) % videoURLs.count
-      queue.async { [weak self] in
-        self?.beginReading(startingAt: next, output: output)
+      do {
+        let sampleBuffer = try CMSampleBuffer.wrapping(imageBuffer: pixelBuffer, presentationTime: itemTime)
+        output.emit(sampleBuffer: sampleBuffer)
+      } catch {
+        Log.error(.capture, "DemoVideoSource could not wrap a frame as a sample buffer: \(error)")
       }
       return
     }
+  }
 
-    if let pixelBuffer = sampleBuffer.takeCVPixelBuffer() {
-      lock.lock()
-      _latestPixelBuffer = pixelBuffer
-      lock.unlock()
+  /// A thread whose only job is to run a display link.
+  ///
+  /// Frames are wanted on the display's cadence, and a display link is the one clock that has
+  /// it — but it needs a run loop, and the main run loop is the wrong one: publishing from there
+  /// would put every frame's handlers on the main thread. So the link lives on a run loop of its
+  /// own, and the main thread never sees a frame it did not ask for.
+  private final class FrameThread: Thread, @unchecked Sendable {
+    private let preferredFrameRate: Float
+    private let tick: @Sendable (CFTimeInterval) -> Void
+    private let lock = NSLock()
+    private var runLoop: CFRunLoop?
+
+    init(preferredFrameRate: Float, tick: @escaping @Sendable (CFTimeInterval) -> Void) {
+      self.preferredFrameRate = preferredFrameRate
+      self.tick = tick
+      super.init()
+      name = "Capturer.DemoVideoSource.frames"
+      qualityOfService = .userInteractive
     }
 
-    output.emit(sampleBuffer: sampleBuffer)
+    override func main() {
+      lock.lock()
+      runLoop = CFRunLoopGetCurrent()
+      lock.unlock()
+
+      let link = CADisplayLink(target: self, selector: #selector(displayLinkDidFire(_:)))
+      link.preferredFrameRateRange = CAFrameRateRange(
+        minimum: 30,
+        maximum: 120,
+        preferred: max(30, preferredFrameRate)
+      )
+      link.add(to: .current, forMode: .default)
+
+      while !isCancelled {
+        RunLoop.current.run(mode: .default, before: .distantFuture)
+      }
+
+      link.invalidate()
+    }
+
+    func stop() {
+      cancel()
+      lock.lock()
+      let runLoop = self.runLoop
+      lock.unlock()
+      if let runLoop {
+        CFRunLoopStop(runLoop)
+      }
+    }
+
+    @objc private func displayLinkDidFire(_ link: CADisplayLink) {
+      guard !isCancelled else { return }
+      tick(link.targetTimestamp)
+    }
   }
 }

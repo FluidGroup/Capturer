@@ -53,7 +53,9 @@ final class DemoCameraTests: XCTestCase {
     try recorder.start(to: url, size: frameSize, rotationDegrees: rotationDegrees)
 
     for index in 0..<frameCount {
-      let buffer = try makePixelBuffer(luma: UInt8(40 + index * 10))
+      // Wraps rather than traps past the 22nd frame; the value only needs to differ between
+      // neighbouring frames.
+      let buffer = try makePixelBuffer(luma: UInt8((40 + index * 10) % 256))
       let time = CMTime(value: CMTimeValue(index), timescale: 30)
       recorder.append(buffer, at: time)
     }
@@ -127,20 +129,26 @@ final class DemoCameraTests: XCTestCase {
 
   // MARK: - Playback
 
-  func testMissingVideoIsRejectedAtConstruction() {
+  func testMissingVideoIsRejectedAtConstruction() async {
     let missing = temporaryURL("does-not-exist.mov")
-    XCTAssertThrowsError(try DemoVideoSource(videoURLs: [missing])) { error in
-      guard case DemoVideoSource.Error.videoNotFound = error else {
-        return XCTFail("expected videoNotFound, got \(error)")
-      }
+    do {
+      _ = try await DemoVideoSource.prepare(videoURLs: [missing])
+      XCTFail("a missing video should be rejected")
+    } catch DemoVideoSource.Error.videoNotFound {
+      // As specified.
+    } catch {
+      XCTFail("expected videoNotFound, got \(error)")
     }
   }
 
-  func testEmptyVideoListIsRejected() {
-    XCTAssertThrowsError(try DemoVideoSource(videoURLs: [])) { error in
-      guard case DemoVideoSource.Error.noVideosAvailable = error else {
-        return XCTFail("expected noVideosAvailable, got \(error)")
-      }
+  func testEmptyVideoListIsRejected() async {
+    do {
+      _ = try await DemoVideoSource.prepare(videoURLs: [])
+      XCTFail("an empty list should be rejected")
+    } catch DemoVideoSource.Error.noVideosAvailable {
+      // As specified.
+    } catch {
+      XCTFail("expected noVideosAvailable, got \(error)")
     }
   }
 
@@ -151,12 +159,12 @@ final class DemoCameraTests: XCTestCase {
 
     let output = VideoDataOutput()
     let received = Received()
-    let cancellable = await output.pixelBufferBus.addHandler { _ in
+    let cancellable = output.pixelBufferBus.addHandler { _ in
       Task { await received.increment() }
     }
     defer { cancellable.cancel() }
 
-    let source = try DemoVideoSource(videoURLs: [url])
+    let source = try await DemoVideoSource.prepare(videoURLs: [url])
     source.start(feeding: output)
     defer { source.stop() }
 
@@ -174,7 +182,7 @@ final class DemoCameraTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let output = VideoDataOutput()
-    let source = try DemoVideoSource(videoURLs: [url])
+    let source = try await DemoVideoSource.prepare(videoURLs: [url])
     source.start(feeding: output)
     defer { source.stop() }
 
@@ -198,7 +206,7 @@ final class DemoCameraTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let photoOutput = PhotoOutput()
-    photoOutput.demoSource = try DemoVideoSource(videoURLs: [url])  // never started
+    photoOutput.demoSource = try await DemoVideoSource.prepare(videoURLs: [url])  // never started
 
     do {
       _ = try await photoOutput.capture(with: AVCapturePhotoSettings())
@@ -216,6 +224,43 @@ final class DemoCameraTests: XCTestCase {
   }
 
   // MARK: - Orientation
+
+
+  // MARK: - Playback pacing
+
+  /// A consumer that stalls must not stretch the footage: the source keeps to the clock and the
+  /// consumer gets the frame for now, so a slow consumer receives fewer frames, never later ones.
+  func testSlowConsumerCostsDroppedFramesNotDelay() async throws {
+    let url = try await recordTestVideo(frameCount: 20)
+    let source = try await DemoVideoSource.prepare(videoURLs: [url])
+    let output = VideoDataOutput()
+
+    let counter = FrameCounter()
+    let subscription = output.sampleBufferBus.addHandler { _ in
+      counter.increment()
+      // Far slower than the 30 fps the recording plays at.
+      Thread.sleep(forTimeInterval: 0.1)
+    }
+    defer { subscription.cancel() }
+
+    source.start(feeding: output)
+    try await Task.sleep(nanoseconds: 1_500_000_000)
+    source.stop()
+
+    // A second and a half of 30 fps footage is 45 frames. A consumer that takes a tenth of a
+    // second per frame can take about fifteen of them; had the rest been queued up for it, it
+    // would still be working through them now.
+    let received = counter.count
+    XCTAssertGreaterThanOrEqual(received, 5, "playback did not run")
+    XCTAssertLessThan(received, 30, "frames were queued for a consumer that could not keep up")
+  }
+
+  private final class FrameCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _count = 0
+    var count: Int { lock.lock(); defer { lock.unlock() }; return _count }
+    func increment() { lock.lock(); _count += 1; lock.unlock() }
+  }
 
   /// A camera records in the sensor's landscape orientation and the preview layer is what turns
   /// the picture upright. That layer is not in this path, so the rotation has to travel with the
@@ -243,7 +288,7 @@ final class DemoCameraTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let output = VideoDataOutput()
-    let source = try DemoVideoSource(videoURLs: [url])
+    let source = try await DemoVideoSource.prepare(videoURLs: [url])
     source.start(feeding: output)
     defer { source.stop() }
 
@@ -267,7 +312,7 @@ final class DemoCameraTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let output = VideoDataOutput()
-    let source = try DemoVideoSource(videoURLs: [url])
+    let source = try await DemoVideoSource.prepare(videoURLs: [url])
     source.start(feeding: output)
     defer { source.stop() }
 
@@ -285,7 +330,7 @@ final class DemoCameraTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let output = VideoDataOutput()
-    let source = try DemoVideoSource(videoURLs: [url])
+    let source = try await DemoVideoSource.prepare(videoURLs: [url])
     source.start(feeding: output)
     defer { source.stop() }
 

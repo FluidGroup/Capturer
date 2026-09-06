@@ -32,16 +32,21 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
 
     subscription?.cancel()
 
-    Task { [weak self] in
-      let subscription = await output
-        .pixelBufferBus
-        .addHandler { [weak self] pixelBuffer in
-          Task { @MainActor in
+    // Frames arrive on the delivery thread; the layer is set on main. Only the newest frame is
+    // ever waiting for main — one that arrives before main has drawn the last replaces it —
+    // so a busy main thread costs frames, never a queue of them.
+    let pending = LatestValueSlot<CVPixelBuffer>()
+    subscription = output
+      .pixelBufferBus
+      .addHandler { [weak self, pending] pixelBuffer in
+        guard pending.replace(with: pixelBuffer) else { return }
+        DispatchQueue.main.async {
+          guard let pixelBuffer = pending.take() else { return }
+          MainActor.assumeIsolated {
             self?.input(pixelBuffer: pixelBuffer)
           }
         }
-      self?.subscription = subscription
-    }
+      }
   }
 
   deinit {

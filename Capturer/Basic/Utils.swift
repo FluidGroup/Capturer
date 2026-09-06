@@ -32,6 +32,57 @@ extension CMSampleBuffer {
   public func takeCVPixelBuffer() -> CVPixelBuffer? {
     CMSampleBufferGetImageBuffer(self)
   }
+
+  /// Wraps a bare pixel buffer the way a capture output would have delivered it.
+  ///
+  /// Anything that feeds frames onto the buses from somewhere other than a capture session needs
+  /// the same shape a session produces: an image buffer with a format description and a
+  /// presentation time. The duration is left unset, as it is on frames from
+  /// `AVCaptureVideoDataOutput`.
+  static func wrapping(imageBuffer: CVPixelBuffer, presentationTime: CMTime) throws -> CMSampleBuffer {
+    let formatDescription = try CMVideoFormatDescription(imageBuffer: imageBuffer)
+    let timing = CMSampleTimingInfo(
+      duration: .invalid,
+      presentationTimeStamp: presentationTime,
+      decodeTimeStamp: .invalid
+    )
+    return try CMSampleBuffer(
+      imageBuffer: imageBuffer,
+      formatDescription: formatDescription,
+      sampleTiming: timing
+    )
+  }
+}
+
+/// A single slot that holds the newest value put into it.
+///
+/// The hand-off for anything that must keep up with a stream it cannot always match — a view
+/// drawing frames on main, a converter on its own queue. `replace(with:)` says whether the slot
+/// was empty, which is the caller's cue to schedule one consumer; a value put into an occupied
+/// slot replaces the one that was waiting, and the consumer already on its way takes the newer
+/// one. So at most one consumer is ever pending, and the value it gets is always the latest.
+final class LatestValueSlot<Value>: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value: Value?
+
+  /// Stores `newValue`, returning `true` when nothing was waiting before — the signal to
+  /// schedule a consumer. Returns `false` when a consumer is already on its way.
+  func replace(with newValue: Value) -> Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    let wasEmpty = value == nil
+    value = newValue
+    return wasEmpty
+  }
+
+  /// Removes and returns whatever is waiting.
+  func take() -> Value? {
+    lock.lock()
+    defer { lock.unlock() }
+    let taken = value
+    value = nil
+    return taken
+  }
 }
 
 extension AVCaptureConnection {

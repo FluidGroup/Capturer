@@ -1,6 +1,5 @@
 
 import Foundation
-import os
 
 public final class EventBusCancellable: Hashable, @unchecked Sendable {
 
@@ -11,7 +10,6 @@ public final class EventBusCancellable: Hashable, @unchecked Sendable {
   public func hash(into hasher: inout Hasher) {
     ObjectIdentifier(self).hash(into: &hasher)
   }
-
 
   private let _onCancel: (EventBusCancellable) -> Void
 
@@ -24,41 +22,52 @@ public final class EventBusCancellable: Hashable, @unchecked Sendable {
   }
 }
 
-/// [non-atomic]
-public actor EventBus<Element : Sendable> {
+/// Hands every element to every handler, synchronously, on the thread that emits it.
+///
+/// This is the delegate model AVFoundation itself uses, and it is what keeps a frame pipeline
+/// honest: a handler runs while the producer waits, so a slow handler costs the producer frames
+/// — the camera drops them, a video source skips to the current one — and nothing is ever queued
+/// up behind it. Handlers should therefore do little: take the element, hand it to their own
+/// queue, return. A handler added after an element was emitted does not see that element; a
+/// handler cancelled during an emit may still receive that one element.
+public final class EventBus<Element: Sendable>: @unchecked Sendable {
   public typealias Handler = @Sendable (Element) -> Void
 
-  public var hasTargets: Bool = false
+  private let lock = NSLock()
+  private var targets: ContiguousArray<(cancellable: EventBusCancellable, handler: Handler)> = .init()
 
   public init() {
   }
 
-  private var targets: ContiguousArray<(cancellable: EventBusCancellable, handler: Handler)> = .init() {
-    didSet {
-      hasTargets = targets.isEmpty == false
-    }
-  }
-
-  private func removeTarget(matchingCancellable: EventBusCancellable) {
-    self.targets.removeAll { $0.cancellable == matchingCancellable }
+  /// Whether anyone is listening — a producer can skip work that nobody would receive.
+  public var hasTargets: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return !targets.isEmpty
   }
 
   public func addHandler(_ handler: @escaping Handler) -> EventBusCancellable {
-
     let cancellable = EventBusCancellable { [weak self] cancellable in
-      guard let self = self else { return }
-      Task {
-        await self.removeTarget(matchingCancellable: cancellable)
-      }
+      self?.removeTarget(matchingCancellable: cancellable)
     }
+    lock.lock()
     targets.append((cancellable, handler))
+    lock.unlock()
     return cancellable
   }
 
   public func emit(element: Element) {
-    for target in targets {
+    lock.lock()
+    let handlers = targets
+    lock.unlock()
+    for target in handlers {
       target.handler(element)
     }
   }
 
+  private func removeTarget(matchingCancellable: EventBusCancellable) {
+    lock.lock()
+    targets.removeAll { $0.cancellable == matchingCancellable }
+    lock.unlock()
+  }
 }

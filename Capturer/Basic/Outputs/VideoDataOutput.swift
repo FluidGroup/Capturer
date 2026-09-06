@@ -11,24 +11,12 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
     public var isVideoMirrored: Bool = false
   }
 
-  private actor Handlers {
-      var didOutput: @Sendable (CMSampleBuffer) -> Void = { _ in }
-
-      func runOutput(buffer: CMSampleBuffer) {
-          self.didOutput(buffer)
-      }
-
-      func setDidOutput(_ didOutput: @escaping @Sendable (CMSampleBuffer) -> Void) {
-        self.didOutput = didOutput
-    }
-  }
-
-  public let sampleBufferBus: EventBus<CMSampleBuffer> = .init()
-  public let pixelBufferBus: EventBus<CVPixelBuffer> = .init()
+  public let sampleBufferBus: EventBus<CMSampleBuffer>
+  public let pixelBufferBus: EventBus<CVPixelBuffer>
 
   public let output = AVCaptureVideoDataOutput()
 
-  private let delegateProxy = _AVCaptureVideoDataOutputSampleBufferDelegateProxy()
+  private let delegateProxy: _AVCaptureVideoDataOutputSampleBufferDelegateProxy
 
   private var observation: NSKeyValueObservation?
 
@@ -41,23 +29,20 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
 
   public override init() {
 
+    let sampleBufferBus = EventBus<CMSampleBuffer>()
+    let pixelBufferBus = EventBus<CVPixelBuffer>()
+    self.sampleBufferBus = sampleBufferBus
+    self.pixelBufferBus = pixelBufferBus
+    self.delegateProxy = .init(sampleBufferBus: sampleBufferBus, pixelBufferBus: pixelBufferBus)
+
     super.init()
 
+    // Frames are published on this queue, synchronously, straight from the delegate callback:
+    // no hop, no task, nothing queued. A handler that cannot keep up costs frames — AVFoundation
+    // drops the ones that arrive while the callback is still busy — which is the behaviour a
+    // camera pipeline is meant to have.
     let queue = DispatchQueue(label: "Capturer.VideoDataOutput")
-
     output.setSampleBufferDelegate(delegateProxy, queue: queue)
-
-      Task {
-          await delegateProxy.handlers.setDidOutput({ [sampleBufferBus, pixelBufferBus] sampleBuffer in
-            Task {
-              await Self.publish(
-                sampleBuffer,
-                sampleBufferBus: sampleBufferBus,
-                pixelBufferBus: pixelBufferBus
-              )
-            }
-          })
-      }
 
     observation = output.observe(\.connections, options: [.initial, .new]) { [weak self] output, _ in
       guard let self = self else { return }
@@ -69,18 +54,11 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
 
   /// Publishes a frame that did not come from the capture session.
   ///
-  /// Frames reach subscribers by exactly the same route whether the camera produced them or
-  /// something else did, which is what lets a recorded video stand in for a camera without a
-  /// second pipeline existing alongside the real one. Everything downstream of the buses — the
-  /// preview, filters, the views — consumes `CVPixelBuffer` and has no way to tell, or care.
+  /// This is how recorded footage stands in for a camera: whatever produced the frame hands it
+  /// over here and it takes exactly the route a captured frame takes. Synchronous — the buses run
+  /// on the calling thread, so call from the thread the frames should be delivered on.
   public func emit(sampleBuffer: CMSampleBuffer) {
-    Task { [sampleBufferBus, pixelBufferBus] in
-      await Self.publish(
-        sampleBuffer,
-        sampleBufferBus: sampleBufferBus,
-        pixelBufferBus: pixelBufferBus
-      )
-    }
+    Self.publish(sampleBuffer, sampleBufferBus: sampleBufferBus, pixelBufferBus: pixelBufferBus)
   }
 
   /// The one place a frame becomes an event, whatever produced it.
@@ -92,11 +70,11 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
     _ sampleBuffer: CMSampleBuffer,
     sampleBufferBus: EventBus<CMSampleBuffer>,
     pixelBufferBus: EventBus<CVPixelBuffer>
-  ) async {
-    await sampleBufferBus.emit(element: sampleBuffer)
+  ) {
+    sampleBufferBus.emit(element: sampleBuffer)
 
-    if await pixelBufferBus.hasTargets, let pixelBuffer = sampleBuffer.takeCVPixelBuffer() {
-      await pixelBufferBus.emit(element: pixelBuffer)
+    if pixelBufferBus.hasTargets, let pixelBuffer = sampleBuffer.takeCVPixelBuffer() {
+      pixelBufferBus.emit(element: pixelBuffer)
     }
   }
 
@@ -130,17 +108,20 @@ open class VideoDataOutput: _StatefulObjectBase, SampleBufferOutputNodeType, Pix
 
   private final class _AVCaptureVideoDataOutputSampleBufferDelegateProxy: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
-    let handlers: Handlers = .init()
+    private let sampleBufferBus: EventBus<CMSampleBuffer>
+    private let pixelBufferBus: EventBus<CVPixelBuffer>
+
+    init(sampleBufferBus: EventBus<CMSampleBuffer>, pixelBufferBus: EventBus<CVPixelBuffer>) {
+      self.sampleBufferBus = sampleBufferBus
+      self.pixelBufferBus = pixelBufferBus
+    }
 
     func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
 
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        let handlers = handlers
-        Task {
-           await handlers.runOutput(buffer: sampleBuffer)
-        }
+      VideoDataOutput.publish(sampleBuffer, sampleBufferBus: sampleBufferBus, pixelBufferBus: pixelBufferBus)
     }
 
   }
