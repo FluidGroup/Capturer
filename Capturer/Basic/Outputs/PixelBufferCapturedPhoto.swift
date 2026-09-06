@@ -5,6 +5,8 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
+// Development aid: a capture made from a demo frame rather than by a camera. Debug builds only.
+#if DEBUG
 /// A captured photo made from a pixel buffer rather than by a camera.
 ///
 /// This is what lets a capture succeed when the frames are not coming from a camera at all — a
@@ -75,3 +77,4 @@ public final class PixelBufferCapturedPhoto: CapturedPhotoRepresentable, @unchec
     return encodedData
   }
 }
+#endif

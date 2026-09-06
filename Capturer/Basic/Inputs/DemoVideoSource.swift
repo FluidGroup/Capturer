@@ -4,6 +4,8 @@ import Foundation
 import QuartzCore
 import UIKit
 
+// Development aid: recorded video standing in for a camera. Compiled only into Debug builds, so a shipped app carries none of it.
+#if DEBUG
 /// Plays recorded video into the capture pipeline in place of a camera.
 ///
 /// Exists because the simulator has no camera, which makes the whole camera half of an app
@@ -432,3 +434,4 @@ public final class DemoVideoSource: @unchecked Sendable {
     }
   }
 }
+#endif

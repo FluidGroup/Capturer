@@ -33,6 +33,7 @@ extension CMSampleBuffer {
     CMSampleBufferGetImageBuffer(self)
   }
 
+#if DEBUG
   /// Wraps a bare pixel buffer the way a capture output would have delivered it.
   ///
   /// Anything that feeds frames onto the buses from somewhere other than a capture session needs
@@ -52,6 +53,7 @@ extension CMSampleBuffer {
       sampleTiming: timing
     )
   }
+#endif
 }
 
 /// A single slot that holds the newest value put into it.

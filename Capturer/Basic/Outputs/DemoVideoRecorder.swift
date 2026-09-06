@@ -2,6 +2,8 @@
 @preconcurrency import CoreMedia
 import Foundation
 
+// Development aid: records the camera for the demo source to play back. Debug builds only.
+#if DEBUG
 /// Records the camera's frames to a file, for later playback by `DemoVideoSource`.
 ///
 /// Deliberately records the *frames*, not the screen. It is fed from the same sample buffers the
@@ -297,3 +299,4 @@ public final class DemoVideoRecorder: @unchecked Sendable {
     }
   }
 }
+#endif

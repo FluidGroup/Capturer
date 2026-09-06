@@ -61,6 +61,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
   /// Set it to run the camera half of an app somewhere there is no camera. The shutter behaves as
   /// it always does — it takes what is on screen — and hands back a `CapturePhoto` that callers
   /// cannot distinguish from a photographed one.
+#if DEBUG
   private let demoSourceLock = NSLock()
   private var _demoSource: DemoVideoSource?
   public var demoSource: DemoVideoSource? {
@@ -75,6 +76,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
       demoSourceLock.unlock()
     }
   }
+#endif
 
   public init(quality: AVCapturePhotoOutput.QualityPrioritization = .balanced) {
     super.init()
@@ -88,6 +90,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
     // A demo source stands in for the camera entirely, so the capture is the frame on screen.
     // Checked before touching `_output`, which has no connection to capture through when there is
     // no camera behind it.
+#if DEBUG
     if let demoSource {
       guard let pixelBuffer = demoSource.latestPixelBuffer else {
         completion(.failure(CaptureError.noFrameAvailable))
@@ -96,6 +99,7 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
       completion(.success(.init(photo: PixelBufferCapturedPhoto(pixelBuffer: pixelBuffer))))
       return
     }
+#endif
 
     var completionWrapper: ((Result<CapturePhoto, Error>) -> Void)!
 
@@ -124,7 +128,12 @@ public final class PhotoOutput: _StatefulObjectBase, OutputNodeType, @unchecked 
   public func capture(with settings: AVCapturePhotoSettings) async throws -> CapturePhoto {
     // Camera permission is meaningless when a demo source is supplying the frames, and asking for
     // it would fail on exactly the platforms this exists to support.
-    if demoSource == nil {
+#if DEBUG
+    let isDrivenByDemoSource = demoSource != nil
+#else
+    let isDrivenByDemoSource = false
+#endif
+    if !isDrivenByDemoSource {
       guard AVCaptureDevice.authorizationStatus(for: .video).isAuthorized else { throw AVAuthorizationStatus.Error.notAuthorized }
     }
     return try await withCheckedThrowingContinuation { continuation in
