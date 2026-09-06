@@ -184,31 +184,36 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
     }
   }
 
-  /// How far the buffers this output publishes still need turning to be upright on screen, in
-  /// degrees, or `nil` before the rotation coordinator has been installed.
+  /// How far the buffers this output publishes still need turning for their horizon to be level,
+  /// in degrees, or `nil` before the rotation coordinator has been installed.
   ///
-  /// The coordinator's horizon-level angle is what the preview layer applies to look right. This
-  /// output asks its own connection to apply the same angle to the buffers it delivers, but a
-  /// connection is free to refuse (`isVideoRotationAngleSupported`), and on some devices it does —
-  /// the frames then arrive in the sensor's landscape orientation with the connection reporting
-  /// zero. Anything that stores or re-displays those frames outside the preview layer — a demo
-  /// recording, say — needs the *difference*, not either angle alone: stamping the coordinator's
-  /// angle onto frames the connection had already rotated would turn them twice.
+  /// Uses the coordinator's *capture* angle, which comes from the device's physical orientation
+  /// and needs no preview layer. The preview angle is the wrong one here: it is defined relative
+  /// to a preview layer's interface orientation, and this coordinator has no layer — on an iPhone
+  /// 16 Pro Max held in portrait it reported 0, which is also why the connection below ends up
+  /// applying nothing. So hold the device the way the footage should read; the answer follows
+  /// gravity, not the screen.
+  ///
+  /// It is the *remaining* rotation. This output asks its connection to rotate the buffers and a
+  /// connection may refuse (`isVideoRotationAngleSupported`), in which case frames arrive in the
+  /// sensor's landscape orientation with the connection reporting zero. Anything that stores or
+  /// re-displays them outside the preview layer — a demo recording — must stamp the difference:
+  /// stamping the full angle onto frames the connection had already turned rotates them twice.
   public var rotationAngleForUprightFrames: CGFloat? {
     let (coordinator, connection) = rotationLock.withLock {
       (rotationCoordinator, rotationConnection)
     }
     guard let coordinator else { return nil }
     return Self.rotationNeeded(
-      previewAngle: coordinator.videoRotationAngleForHorizonLevelPreview,
+      horizonAngle: coordinator.videoRotationAngleForHorizonLevelCapture,
       connectionAngle: connection?.videoRotationAngle ?? 0
     )
   }
 
   /// The rotation left to apply once a connection has applied `connectionAngle` of the
-  /// `previewAngle` the horizon needs, normalised to `0..<360`.
-  static func rotationNeeded(previewAngle: CGFloat, connectionAngle: CGFloat) -> CGFloat {
-    let remainder = (previewAngle - connectionAngle).truncatingRemainder(dividingBy: 360)
+  /// `horizonAngle` the frames need, normalised to `0..<360`.
+  static func rotationNeeded(horizonAngle: CGFloat, connectionAngle: CGFloat) -> CGFloat {
+    let remainder = (horizonAngle - connectionAngle).truncatingRemainder(dividingBy: 360)
     return remainder < 0 ? remainder + 360 : remainder
   }
 
