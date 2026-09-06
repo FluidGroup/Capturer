@@ -109,9 +109,11 @@ final class DemoCameraTests: XCTestCase {
     XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
     let asset = AVURLAsset(url: url)
-    let track = try XCTUnwrap(asset.tracks(withMediaType: .video).first, "expected a video track")
-    XCTAssertEqual(track.naturalSize.width, frameSize.width)
-    XCTAssertEqual(track.naturalSize.height, frameSize.height)
+    let tracks = try await asset.loadTracks(withMediaType: .video)
+    let track = try XCTUnwrap(tracks.first, "expected a video track")
+    let naturalSize = try await track.load(.naturalSize)
+    XCTAssertEqual(naturalSize.width, frameSize.width)
+    XCTAssertEqual(naturalSize.height, frameSize.height)
   }
 
   func testRecorderRefusesToFinishWithNoFrames() async throws {
@@ -269,13 +271,15 @@ final class DemoCameraTests: XCTestCase {
     let url = try await recordTestVideo(rotationDegrees: 90)
     defer { try? FileManager.default.removeItem(at: url) }
 
-    let track = try XCTUnwrap(AVURLAsset(url: url).tracks(withMediaType: .video).first)
+    let tracks = try await AVURLAsset(url: url).loadTracks(withMediaType: .video)
+    let track = try XCTUnwrap(tracks.first)
+    let (naturalSize, preferredTransform) = try await track.load(.naturalSize, .preferredTransform)
     XCTAssertFalse(
-      track.preferredTransform.isIdentity,
+      preferredTransform.isIdentity,
       "a recording made with a rotation should carry it, not lose it"
     )
     // A quarter turn swaps what the track reports as its display size.
-    let displaySize = track.naturalSize.applying(track.preferredTransform)
+    let displaySize = naturalSize.applying(preferredTransform)
     XCTAssertEqual(abs(displaySize.width), frameSize.height, accuracy: 1)
     XCTAssertEqual(abs(displaySize.height), frameSize.width, accuracy: 1)
   }

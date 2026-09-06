@@ -91,29 +91,11 @@ extension AVCaptureConnection {
 
     return [
       "isActive" : isActive,
-      "orientation": videoOrientation._capturer_localizedDescription(),
+      "videoRotationAngle": videoRotationAngle,
       "isVideoMirrored" : isVideoMirrored,
       "automaticallyAdjustsVideoMirroring" : automaticallyAdjustsVideoMirroring,
       "inputPorts" : inputPorts
     ]
   }
 
-}
-
-extension AVCaptureVideoOrientation {
-
-  func _capturer_localizedDescription() -> String {
-    switch self {
-    case .portrait:
-      return "portrait"
-    case .portraitUpsideDown:
-      return "portraitUpsideDown"
-    case .landscapeRight:
-      return "landscapeRight"
-    case .landscapeLeft:
-      return "landscapeLeft"
-    @unknown default:
-      return ""
-    }
-  }
 }

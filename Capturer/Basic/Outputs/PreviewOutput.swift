@@ -8,7 +8,22 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
     public struct InputInfo: Equatable {
 
       public let activeFormat: AVCaptureDevice.Format
-      public let videoOrientation: AVCaptureVideoOrientation
+      /// The connection's `videoRotationAngle`: 0, 90, 180 or 270 degrees, where 90 is portrait.
+      public let videoRotationAngle: CGFloat
+
+      /// The connection's orientation as the enumeration iOS 17 retired.
+      ///
+      /// Kept for callers written against it; it is derived from `videoRotationAngle`, which is
+      /// what the connection actually reports now.
+      @available(*, deprecated, message: "Use videoRotationAngle")
+      public var videoOrientation: AVCaptureVideoOrientation {
+        switch videoRotationAngle {
+        case 90: return .portrait
+        case 270: return .portraitUpsideDown
+        case 180: return .landscapeLeft
+        default: return .landscapeRight
+        }
+      }
 
       public var aspectRatio: CGSize {
         let dimension = CMVideoFormatDescriptionGetDimensions(activeFormat.formatDescription)
@@ -20,12 +35,12 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
        Normally, camera's top is the left side of the device.
        */
       public var aspectRatioRespectingVideoOrientation: CGSize {
-        switch videoOrientation {
-        case .portrait, .portraitUpsideDown:
+        switch videoRotationAngle {
+        case 90, 270:
           return aspectRatio
-        case .landscapeLeft, .landscapeRight:
+        case 0, 180:
           return .init(width: aspectRatio.height, height: aspectRatio.width)
-        @unknown default:
+        default:
           return aspectRatio
         }
       }
@@ -109,7 +124,7 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
 
       self.state.inputInfo = .init(
         activeFormat: activeFormat,
-        videoOrientation: connection.videoOrientation
+        videoRotationAngle: connection.videoRotationAngle
       )
     } else {
       self.state.inputInfo = nil

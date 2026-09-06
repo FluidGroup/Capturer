@@ -5,23 +5,6 @@ import UIKit
 extension CGImagePropertyOrientation {
 
   init(
-    _ videoOrientation: AVCaptureVideoOrientation
-  ) {
-    switch videoOrientation {
-    case .portrait:
-      self = .right
-    case .portraitUpsideDown:
-      self = .left
-    case .landscapeRight:
-      self = .down
-    case .landscapeLeft:
-      self = .up
-    @unknown default:
-      fatalError()
-    }
-  }
-
-  init(
     _ uiOrientation: UIImage.Orientation
   ) {
     switch uiOrientation {

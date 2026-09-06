@@ -64,7 +64,7 @@ public final class DemoVideoSource: @unchecked Sendable {
   /// In playback order: the video playing, then the one after it.
   private var queued: [QueuedVideo] = []
   private var nextVideoIndex = 0
-  private var endObserver: (any NSObjectProtocol)?
+  private var endObservers: [any NSObjectProtocol] = []
   private var frameThread: FrameThread?
   private var _latestPixelBuffer: CVPixelBuffer?
   private var _naturalSize: CGSize
@@ -177,13 +177,22 @@ public final class DemoVideoSource: @unchecked Sendable {
     enqueueNextVideo(into: player)
     enqueueNextVideo(into: player)
 
-    endObserver = NotificationCenter.default.addObserver(
-      forName: AVPlayerItem.didPlayToEndTimeNotification,
-      object: nil,
-      queue: nil
-    ) { [weak self] notification in
-      guard let item = notification.object as? AVPlayerItem else { return }
-      self?.videoDidEnd(item)
+    // Both ways an item leaves the queue: played through, or failed part way. A failure that
+    // was not treated as an end would leave the queue one short, and playback would stop after
+    // the next video for a reason nobody could see.
+    for name in [AVPlayerItem.didPlayToEndTimeNotification, AVPlayerItem.failedToPlayToEndTimeNotification] {
+      endObservers.append(NotificationCenter.default.addObserver(
+        forName: name,
+        object: nil,
+        queue: nil
+      ) { [weak self] notification in
+        guard let item = notification.object as? AVPlayerItem else { return }
+        if name == AVPlayerItem.failedToPlayToEndTimeNotification {
+          let error = notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] ?? "unknown error"
+          Log.error(.capture, "DemoVideoSource: a video failed to play to its end: \(error)")
+        }
+        self?.videoDidEnd(item)
+      })
     }
 
     // The highest rate among the videos, so a 60 fps recording is shown at 60 even when queued
@@ -208,10 +217,10 @@ public final class DemoVideoSource: @unchecked Sendable {
     let player = self.player
     self.player = nil
     queued.removeAll()
-    if let endObserver {
-      NotificationCenter.default.removeObserver(endObserver)
+    for observer in endObservers {
+      NotificationCenter.default.removeObserver(observer)
     }
-    endObserver = nil
+    endObservers.removeAll()
     lock.unlock()
 
     thread?.stop()
