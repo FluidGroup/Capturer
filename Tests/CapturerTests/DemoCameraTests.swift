@@ -673,6 +673,17 @@ final class DemoCameraTests: XCTestCase {
   /// The recorder must stamp only what the connection did *not* already apply. A device whose
   /// data connection refuses rotation hands over sensor-landscape frames and reports zero; one
   /// whose connection rotates them reports the full angle and the frames are already upright.
+  /// A quarter turn swaps the frame's dimensions; anything else leaves them.
+  func testAspectRatioSwapsAtAQuarterTurnOnly() {
+    let sensor = CGSize(width: 4032, height: 3024)
+    let turned = CGSize(width: 3024, height: 4032)
+    XCTAssertEqual(PreviewOutput.State.InputInfo.aspectRatio(sensor, rotatedBy: 0), sensor)
+    XCTAssertEqual(PreviewOutput.State.InputInfo.aspectRatio(sensor, rotatedBy: 90), turned)
+    XCTAssertEqual(PreviewOutput.State.InputInfo.aspectRatio(sensor, rotatedBy: 180), sensor)
+    XCTAssertEqual(PreviewOutput.State.InputInfo.aspectRatio(sensor, rotatedBy: 270), turned)
+    XCTAssertEqual(PreviewOutput.State.InputInfo.aspectRatio(sensor, rotatedBy: 45), sensor)
+  }
+
   func testRotationNeededIsTheDifferenceBetweenHorizonAndConnection() {
     XCTAssertEqual(PreviewOutput.rotationNeeded(horizonAngle: 90, connectionAngle: 0), 90,
                    "connection refused rotation: the whole horizon angle is still owed")

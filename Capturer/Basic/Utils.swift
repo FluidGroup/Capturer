@@ -61,9 +61,15 @@ extension CMSampleBuffer {
 /// was empty, which is the caller's cue to schedule one consumer; a value put into an occupied
 /// slot replaces the one that was waiting, and the consumer already on its way takes the newer
 /// one. So at most one consumer is ever pending, and the value it gets is always the latest.
-final class LatestValueSlot<Value>: @unchecked Sendable {
+///
+/// `@unchecked Sendable` because every access is under the lock; the value itself crosses
+/// threads by design — a `CVPixelBuffer` from a delivery thread to main — and is not required
+/// to be `Sendable`.
+public final class LatestValueSlot<Value>: @unchecked Sendable {
   private let lock = NSLock()
   private var value: Value?
+
+  public init() {}
 
   /// Stores `newValue`, returning `true` when nothing was waiting before — the signal to
   /// schedule a consumer. Returns `false` when a consumer is already on its way.
@@ -71,7 +77,7 @@ final class LatestValueSlot<Value>: @unchecked Sendable {
   /// The consumer that is scheduled must call `take()` exactly once, and before anything that
   /// could return early: the slot stays occupied until it does, and while it is occupied no
   /// further consumer is ever scheduled. `take()` returns `nil` only if that was not honoured.
-  func replace(with newValue: Value) -> Bool {
+  public func replace(with newValue: Value) -> Bool {
     lock.lock()
     let previous = value
     value = newValue
@@ -82,7 +88,7 @@ final class LatestValueSlot<Value>: @unchecked Sendable {
   }
 
   /// Removes and returns whatever is waiting.
-  func take() -> Value? {
+  public func take() -> Value? {
     lock.lock()
     defer { lock.unlock() }
     let taken = value

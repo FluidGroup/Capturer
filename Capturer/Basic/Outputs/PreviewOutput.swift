@@ -35,19 +35,25 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
         return CGSize(width: CGFloat(dimension.width), height: CGFloat(dimension.height))
       }
 
-      /**
-       Aspect ratio described using CGSize that applied orientation.
-       Normally, camera's top is the left side of the device.
-       */
-      @available(*, deprecated, message: "Returns the unrotated ratio at 90/270 and the swapped one at 0/180 — the reverse of what a rotated connection delivers. Compute from aspectRatio and videoRotationAngle.")
+      /// The format's dimensions as the rotated frames come out: a quarter turn swaps them.
+      ///
+      /// Until 4.4.1 this returned the reverse — unswapped at a quarter turn, swapped otherwise —
+      /// which no caller had noticed because none existed. Deprecated so that a caller written
+      /// against the old answer sees the change; the value is now right.
+      @available(*, deprecated, message: "Use InputInfo.aspectRatio(_:rotatedBy:) with aspectRatio and videoRotationAngle")
       public var aspectRatioRespectingVideoOrientation: CGSize {
+        Self.aspectRatio(aspectRatio, rotatedBy: videoRotationAngle)
+      }
+
+      /// `size` once frames have been turned by `videoRotationAngle` degrees: swapped at a
+      /// quarter turn (90, 270), unchanged at 0, 180 and at any angle that is not a multiple
+      /// of a quarter turn, which a connection never reports.
+      public static func aspectRatio(_ size: CGSize, rotatedBy videoRotationAngle: CGFloat) -> CGSize {
         switch videoRotationAngle {
         case 90, 270:
-          return aspectRatio
-        case 0, 180:
-          return .init(width: aspectRatio.height, height: aspectRatio.width)
+          return CGSize(width: size.height, height: size.width)
         default:
-          return aspectRatio
+          return size
         }
       }
     }
