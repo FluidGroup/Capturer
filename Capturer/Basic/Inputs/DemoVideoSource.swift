@@ -33,7 +33,7 @@ public final class DemoVideoSource: @unchecked Sendable {
   private let lock = NSLock()
   private var currentIndex = 0
   private var reader: AVAssetReader?
-  private var trackOutput: AVAssetReaderTrackOutput?
+  private var trackOutput: AVAssetReaderVideoCompositionOutput?
   private var isRunning = false
   private var timer: DispatchSourceTimer?
   private var _latestPixelBuffer: CVPixelBuffer?
@@ -139,7 +139,18 @@ public final class DemoVideoSource: @unchecked Sendable {
       // would have.
       kCVPixelBufferIOSurfacePropertiesKey as String: [:] as CFDictionary
     ]
-    let trackOutput = AVAssetReaderTrackOutput(track: track, outputSettings: settings)
+
+    // Read through a video composition rather than straight off the track, so the track's
+    // `preferredTransform` is applied to the frames themselves.
+    //
+    // A camera records in the sensor's own landscape orientation and it is the preview layer that
+    // turns the picture upright — and that layer is not in this path. Reading the track directly
+    // handed every consumer sideways frames: the preview drew them sideways, and so did a capture,
+    // because the shutter returns the buffer rather than anything the preview did to it. Rotating
+    // here is the one place that fixes both, and it is the same rotation the file already carries.
+    let composition = AVMutableVideoComposition(propertiesOf: asset)
+    let trackOutput = AVAssetReaderVideoCompositionOutput(videoTracks: [track], videoSettings: settings)
+    trackOutput.videoComposition = composition
     // Copies, because frames outlive the read: the most recent one is held for a capture to
     // return, and the preview holds one as layer contents. Reusing the reader's memory under
     // either of those shows torn or recycled frames.
@@ -162,7 +173,10 @@ public final class DemoVideoSource: @unchecked Sendable {
     self.reader = reader
     self.trackOutput = trackOutput
     self.currentIndex = index
-    self.naturalSize = track.naturalSize
+    // The composition's render size, not the track's natural size: once a quarter-turn has been
+    // applied those differ, and every caller asking for this wants the size of the frames it is
+    // actually being handed.
+    self.naturalSize = composition.renderSize
     lock.unlock()
 
     // Paced rather than read-as-fast-as-possible, so the preview moves at the speed it was

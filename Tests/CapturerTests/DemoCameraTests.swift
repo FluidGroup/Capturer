@@ -47,10 +47,10 @@ final class DemoCameraTests: XCTestCase {
   }
 
   /// Writes a short video of solid frames and returns where it landed.
-  private func recordTestVideo(frameCount: Int = 12) async throws -> URL {
+  private func recordTestVideo(frameCount: Int = 12, rotationDegrees: CGFloat = 0) async throws -> URL {
     let url = temporaryURL("demo.mov")
     let recorder = DemoVideoRecorder()
-    try recorder.start(to: url, size: frameSize)
+    try recorder.start(to: url, size: frameSize, rotationDegrees: rotationDegrees)
 
     for index in 0..<frameCount {
       let buffer = try makePixelBuffer(luma: UInt8(40 + index * 10))
@@ -213,6 +213,86 @@ final class DemoCameraTests: XCTestCase {
   private actor Received {
     var count = 0
     func increment() { count += 1 }
+  }
+
+  // MARK: - Orientation
+
+  /// A camera records in the sensor's landscape orientation and the preview layer is what turns
+  /// the picture upright. That layer is not in this path, so the rotation has to travel with the
+  /// file — otherwise every consumer downstream gets sideways frames.
+  func testRecordedRotationTravelsWithTheFile() async throws {
+    let url = try await recordTestVideo(rotationDegrees: 90)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let track = try XCTUnwrap(AVURLAsset(url: url).tracks(withMediaType: .video).first)
+    XCTAssertFalse(
+      track.preferredTransform.isIdentity,
+      "a recording made with a rotation should carry it, not lose it"
+    )
+    // A quarter turn swaps what the track reports as its display size.
+    let displaySize = track.naturalSize.applying(track.preferredTransform)
+    XCTAssertEqual(abs(displaySize.width), frameSize.height, accuracy: 1)
+    XCTAssertEqual(abs(displaySize.height), frameSize.width, accuracy: 1)
+  }
+
+  /// The rotation has to reach the *buffers*, not just the file's metadata. The shutter returns
+  /// the buffer rather than anything the preview did with it, so a fix that only turned the
+  /// preview upright would still photograph the scene sideways.
+  func testPlaybackTurnsRotatedFootageUprightForEveryConsumer() async throws {
+    let url = try await recordTestVideo(rotationDegrees: 90)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let output = VideoDataOutput()
+    let source = try DemoVideoSource(videoURLs: [url])
+    source.start(feeding: output)
+    defer { source.stop() }
+
+    try await waitUntil("a frame is published") { source.latestPixelBuffer != nil }
+    let frame = try XCTUnwrap(source.latestPixelBuffer)
+
+    XCTAssertEqual(CVPixelBufferGetWidth(frame), Int(frameSize.height),
+                   "a quarter turn should swap the frame's width and height")
+    XCTAssertEqual(CVPixelBufferGetHeight(frame), Int(frameSize.width),
+                   "a quarter turn should swap the frame's width and height")
+    XCTAssertEqual(source.naturalSize.width, frameSize.height, accuracy: 1,
+                   "naturalSize should describe the frames handed out, not the stored track")
+    XCTAssertEqual(source.naturalSize.height, frameSize.width, accuracy: 1,
+                   "naturalSize should describe the frames handed out, not the stored track")
+  }
+
+  /// Footage recorded without a rotation must come back untouched — the composition is there to
+  /// honour what the file says, not to impose a turn of its own.
+  func testPlaybackLeavesUnrotatedFootageAlone() async throws {
+    let url = try await recordTestVideo()
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let output = VideoDataOutput()
+    let source = try DemoVideoSource(videoURLs: [url])
+    source.start(feeding: output)
+    defer { source.stop() }
+
+    try await waitUntil("a frame is published") { source.latestPixelBuffer != nil }
+    let frame = try XCTUnwrap(source.latestPixelBuffer)
+
+    XCTAssertEqual(CVPixelBufferGetWidth(frame), Int(frameSize.width))
+    XCTAssertEqual(CVPixelBufferGetHeight(frame), Int(frameSize.height))
+  }
+
+  /// Rotated frames must still be IOSurface-backed. Losing that backing is the failure that
+  /// showed nothing at all on screen, with the frames arriving correctly the entire time.
+  func testRotatedFramesAreStillIOSurfaceBacked() async throws {
+    let url = try await recordTestVideo(rotationDegrees: 90)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let output = VideoDataOutput()
+    let source = try DemoVideoSource(videoURLs: [url])
+    source.start(feeding: output)
+    defer { source.stop() }
+
+    try await waitUntil("a frame is published") { source.latestPixelBuffer != nil }
+    let frame = try XCTUnwrap(source.latestPixelBuffer)
+    XCTAssertNotNil(CVPixelBufferGetIOSurface(frame),
+                    "the preview draws these as layer contents, which needs an IOSurface")
   }
 
   private func waitUntil(

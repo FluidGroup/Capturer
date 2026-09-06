@@ -29,10 +29,31 @@ public final class DemoVideoRecorder: @unchecked Sendable {
 
   public init() {}
 
+  /// What to spend on a second of video at `size`.
+  ///
+  /// Set explicitly because the alternative is whatever AVFoundation picks, which for a full-size
+  /// camera frame is around 15 Mbps — a minute of that is over a hundred megabytes, for footage
+  /// whose entire purpose is to be committed alongside an app as a development aid. Scaled by
+  /// pixel count rather than fixed, so it stays sane whatever the camera hands over.
+  private static func bitRate(for size: CGSize) -> Int {
+    let framesPerSecond = 30.0
+    // Comfortably above where H.264 shows artefacts on camera footage, and roughly a fifth of the
+    // default. Chosen against real recordings rather than derived.
+    let bitsPerPixel = 0.05
+    return Int(size.width * size.height * framesPerSecond * bitsPerPixel)
+  }
+
   /// Begins recording to `url`, overwriting anything already there.
   ///
-  /// - Parameter size: The frame size to record. Must match the buffers subsequently appended.
-  public func start(to url: URL, size: CGSize) throws {
+  /// - Parameters:
+  ///   - size: The frame size to record. Must match the buffers subsequently appended.
+  ///   - rotationDegrees: How far the frames must be turned to be upright, which is what a camera
+  ///     connection's `videoRotationAngle` reports. Recorded onto the track rather than applied to
+  ///     the buffers: rotating each frame on the way in would cost a rotation per frame during a
+  ///     live capture and risk dropping them, and the file would stop saying what the camera
+  ///     actually produced. `DemoVideoSource` applies it on the way out, where the cost does not
+  ///     matter and one place serves the preview and the shutter alike. Zero records no rotation.
+  public func start(to url: URL, size: CGSize, rotationDegrees: CGFloat = 0) throws {
     lock.lock()
     defer { lock.unlock() }
 
@@ -47,10 +68,16 @@ public final class DemoVideoRecorder: @unchecked Sendable {
     let settings: [String: Any] = [
       AVVideoCodecKey: AVVideoCodecType.h264,
       AVVideoWidthKey: Int(size.width),
-      AVVideoHeightKey: Int(size.height)
+      AVVideoHeightKey: Int(size.height),
+      AVVideoCompressionPropertiesKey: [
+        AVVideoAverageBitRateKey: Self.bitRate(for: size)
+      ]
     ]
     let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
     input.expectsMediaDataInRealTime = true
+    if rotationDegrees != 0 {
+      input.transform = CGAffineTransform(rotationAngle: rotationDegrees * .pi / 180)
+    }
 
     let adaptor = AVAssetWriterInputPixelBufferAdaptor(
       assetWriterInput: input,
