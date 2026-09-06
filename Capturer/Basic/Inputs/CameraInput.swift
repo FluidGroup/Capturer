@@ -82,26 +82,26 @@ extension CameraInput {
     let device = self.device
     let current = device.activeFormat
 
-    func fits(_ format: AVCaptureDevice.Format) -> Bool {
-      guard let maximumDimensions else { return true }
-      let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-      return dimensions.width <= maximumDimensions.width && dimensions.height <= maximumDimensions.height
-    }
-
     let format: AVCaptureDevice.Format
-    if current.supportsFrameRate(framesPerSecond), fits(current) {
+    if current.supportsFrameRate(framesPerSecond), current.fits(within: maximumDimensions) {
       format = current
     } else {
       let currentSubType = CMFormatDescriptionGetMediaSubType(current.formatDescription)
       let candidates = device.formats.filter {
         CMFormatDescriptionGetMediaSubType($0.formatDescription) == currentSubType
           && $0.supportsFrameRate(framesPerSecond)
-          && fits($0)
+          && $0.fits(within: maximumDimensions)
       }
-      guard let largest = candidates.max(by: { $0.pixelCount < $1.pixelCount }) else {
+      guard let preferred = candidates.max(by: { $0.preferenceKey < $1.preferenceKey }) else {
         throw Error.frameRateUnsupported(framesPerSecond)
       }
-      format = largest
+      format = preferred
+    }
+
+    // Resolved before the lock so that nothing on the device has changed when the rate turns
+    // out to be unavailable.
+    guard let frameDuration = format.frameDuration(for: framesPerSecond) else {
+      throw Error.frameRateUnsupported(framesPerSecond)
     }
 
     try device.lockForConfiguration()
@@ -110,46 +110,62 @@ extension CameraInput {
     if format !== current {
       device.activeFormat = format
     }
-    // The range's own duration where the asked-for rate is its ceiling. A duration built from
-    // the rate can land a rounding error short of the range, and a frame duration outside the
-    // format's ranges is an exception, not an error.
-    guard let frameDuration = format.frameDuration(for: framesPerSecond) else {
-      throw Error.frameRateUnsupported(framesPerSecond)
-    }
     device.activeVideoMinFrameDuration = frameDuration
     device.activeVideoMaxFrameDuration = frameDuration
 
-    return CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+    return format.dimensions
   }
 }
 
 extension AVCaptureDevice.Format {
+
+  fileprivate var dimensions: CMVideoDimensions {
+    CMVideoFormatDescriptionGetDimensions(formatDescription)
+  }
+
+  /// Whether the frame fits inside `maximumDimensions` regardless of orientation. Formats are
+  /// always described landscape, so a caller thinking in portrait is not refused for it.
+  fileprivate func fits(within maximumDimensions: CMVideoDimensions?) -> Bool {
+    guard let maximumDimensions else { return true }
+    let frame = dimensions
+    return max(frame.width, frame.height) <= max(maximumDimensions.width, maximumDimensions.height)
+      && min(frame.width, frame.height) <= min(maximumDimensions.width, maximumDimensions.height)
+  }
+
+  /// Orders formats so the choice among equally sized ones is deliberate: unbinned over binned
+  /// for sharpness, then the wider field of view, which is closest to what the preview normally
+  /// shows.
+  fileprivate var preferenceKey: (pixelCount: Int, unbinned: Int, fieldOfView: Float) {
+    (pixelCount, isVideoBinned ? 0 : 1, videoFieldOfView)
+  }
+
+  fileprivate var pixelCount: Int {
+    let dimensions = self.dimensions
+    return Int(dimensions.width) * Int(dimensions.height)
+  }
 
   fileprivate func supportsFrameRate(_ framesPerSecond: Double) -> Bool {
     frameRateRange(containing: framesPerSecond) != nil
   }
 
   fileprivate func frameRateRange(containing framesPerSecond: Double) -> AVFrameRateRange? {
-    videoSupportedFrameRateRanges.first {
+    guard framesPerSecond > 0 else { return nil }
+    return videoSupportedFrameRateRanges.first {
       $0.minFrameRate <= framesPerSecond && framesPerSecond <= $0.maxFrameRate
     }
   }
 
-  /// The frame duration for `framesPerSecond` within this format's ranges, or nil when no range
-  /// contains it.
+  /// The frame duration for `framesPerSecond`, or nil when no range of this format contains it.
+  ///
+  /// `CMTime(seconds:)` truncates, so the duration for a rate at a range's ceiling comes out a
+  /// microsecond shorter than the range allows — and a duration outside the range is an
+  /// exception, not an error. The range's own bounds are what AVFoundation checks against, so
+  /// clamping to them is always accepted.
   fileprivate func frameDuration(for framesPerSecond: Double) -> CMTime? {
     guard let range = frameRateRange(containing: framesPerSecond) else { return nil }
-    if abs(framesPerSecond - range.maxFrameRate) < 0.001 {
-      return range.minFrameDuration
-    }
-    if abs(framesPerSecond - range.minFrameRate) < 0.001 {
-      return range.maxFrameDuration
-    }
-    return CMTime(seconds: 1 / framesPerSecond, preferredTimescale: 1_000_000)
-  }
-
-  fileprivate var pixelCount: Int {
-    let dimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
-    return Int(dimensions.width) * Int(dimensions.height)
+    let requested = CMTime(seconds: 1 / framesPerSecond, preferredTimescale: 1_000_000)
+    if CMTimeCompare(requested, range.minFrameDuration) < 0 { return range.minFrameDuration }
+    if CMTimeCompare(requested, range.maxFrameDuration) > 0 { return range.maxFrameDuration }
+    return requested
   }
 }

@@ -8,13 +8,18 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
     public struct InputInfo: Equatable {
 
       public let activeFormat: AVCaptureDevice.Format
-      /// The connection's `videoRotationAngle`: 0, 90, 180 or 270 degrees, where 90 is portrait.
+      /// The connection's `videoRotationAngle` when the connection was formed: 0, 90, 180 or 270
+      /// degrees, relative to the sensor's native orientation. On iPhones through 16 (and iPhone
+      /// 17 rear cameras) 90 is portrait; the iPhone 17 front camera's sensor is mounted
+      /// differently and reports 0 for portrait. The rotation coordinator installed afterwards
+      /// may set a different angle on the connection; this value is not refreshed when it does.
       public let videoRotationAngle: CGFloat
 
       /// The connection's orientation as the enumeration iOS 17 retired.
       ///
       /// Kept for callers written against it; it is derived from `videoRotationAngle`, which is
-      /// what the connection actually reports now.
+      /// what the connection actually reports now. Assumes the classic sensor mounting
+      /// (90 == portrait); see `videoRotationAngle`.
       @available(*, deprecated, message: "Use videoRotationAngle")
       public var videoOrientation: AVCaptureVideoOrientation {
         switch videoRotationAngle {
@@ -34,6 +39,7 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
        Aspect ratio described using CGSize that applied orientation.
        Normally, camera's top is the left side of the device.
        */
+      @available(*, deprecated, message: "Returns the unrotated ratio at 90/270 and the swapped one at 0/180 — the reverse of what a rotated connection delivers. Compute from aspectRatio and videoRotationAngle.")
       public var aspectRatioRespectingVideoOrientation: CGSize {
         switch videoRotationAngle {
         case 90, 270:

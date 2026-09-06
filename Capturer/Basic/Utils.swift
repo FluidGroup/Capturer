@@ -67,12 +67,18 @@ final class LatestValueSlot<Value>: @unchecked Sendable {
 
   /// Stores `newValue`, returning `true` when nothing was waiting before — the signal to
   /// schedule a consumer. Returns `false` when a consumer is already on its way.
+  ///
+  /// The consumer that is scheduled must call `take()` exactly once, and before anything that
+  /// could return early: the slot stays occupied until it does, and while it is occupied no
+  /// further consumer is ever scheduled. `take()` returns `nil` only if that was not honoured.
   func replace(with newValue: Value) -> Bool {
     lock.lock()
-    defer { lock.unlock() }
-    let wasEmpty = value == nil
+    let previous = value
     value = newValue
-    return wasEmpty
+    lock.unlock()
+    // The displaced value is released here, after the lock, so a consumer waiting in `take()`
+    // is not held up by whatever freeing it costs.
+    return withExtendedLifetime(previous) { previous == nil }
   }
 
   /// Removes and returns whatever is waiting.

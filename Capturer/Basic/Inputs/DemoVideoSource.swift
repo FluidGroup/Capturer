@@ -2,6 +2,7 @@
 @preconcurrency import CoreMedia
 import Foundation
 import QuartzCore
+import UIKit
 
 /// Plays recorded video into the capture pipeline in place of a camera.
 ///
@@ -30,11 +31,15 @@ public final class DemoVideoSource: @unchecked Sendable {
     /// worse than one that stopped.
     case videoNotFound(URL)
     case noVideosAvailable
-    case couldNotReadVideo(URL)
+    /// The file was read but has no video track.
+    case noVideoTrack(URL)
+    /// The file could not be read; the loader's own error says why, and this says which file.
+    case couldNotReadVideo(URL, underlying: any Swift.Error)
   }
 
   /// A video read once, ready to be played any number of times.
   private struct PreparedVideo {
+    let url: URL
     let asset: AVURLAsset
     /// Applies the track's `preferredTransform` to the frames themselves.
     ///
@@ -53,6 +58,8 @@ public final class DemoVideoSource: @unchecked Sendable {
     let item: AVPlayerItem
     let output: AVPlayerItemVideoOutput
     let renderSize: CGSize
+    /// Kept only for its lifetime; dropping the struct ends the observation.
+    let statusObservation: NSKeyValueObservation
   }
 
   private let videos: [PreparedVideo]
@@ -64,7 +71,7 @@ public final class DemoVideoSource: @unchecked Sendable {
   /// In playback order: the video playing, then the one after it.
   private var queued: [QueuedVideo] = []
   private var nextVideoIndex = 0
-  private var endObservers: [any NSObjectProtocol] = []
+  private var notificationObservers: [any NSObjectProtocol] = []
   private var frameThread: FrameThread?
   private var _latestPixelBuffer: CVPixelBuffer?
   private var _naturalSize: CGSize
@@ -118,19 +125,27 @@ public final class DemoVideoSource: @unchecked Sendable {
         throw Error.videoNotFound(url)
       }
       let asset = AVURLAsset(url: url)
-      // A recording has one video track; a file with several would be something other than a
-      // recording, and the first is still the one a player would show.
-      guard let track = try await asset.loadTracks(withMediaType: .video).first else {
-        throw Error.couldNotReadVideo(url)
+      do {
+        // A recording has one video track; a file with several would be something other than a
+        // recording, and the first is still the one a player would show.
+        guard let track = try await asset.loadTracks(withMediaType: .video).first else {
+          throw Error.noVideoTrack(url)
+        }
+        let nominalFrameRate = try await track.load(.nominalFrameRate)
+        let composition = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
+        videos.append(PreparedVideo(
+          url: url,
+          asset: asset,
+          composition: composition,
+          renderSize: composition.renderSize,
+          nominalFrameRate: nominalFrameRate
+        ))
+      } catch let error as Error {
+        throw error
+      } catch {
+        // The loader's errors do not say which file; the caller was given several.
+        throw Error.couldNotReadVideo(url, underlying: error)
       }
-      let nominalFrameRate = try await track.load(.nominalFrameRate)
-      let composition = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
-      videos.append(PreparedVideo(
-        asset: asset,
-        composition: composition,
-        renderSize: composition.renderSize,
-        nominalFrameRate: nominalFrameRate
-      ))
     }
     return DemoVideoSource(videos: videos, pixelFormat: pixelFormat)
   }
@@ -181,19 +196,30 @@ public final class DemoVideoSource: @unchecked Sendable {
     // was not treated as an end would leave the queue one short, and playback would stop after
     // the next video for a reason nobody could see.
     for name in [AVPlayerItem.didPlayToEndTimeNotification, AVPlayerItem.failedToPlayToEndTimeNotification] {
-      endObservers.append(NotificationCenter.default.addObserver(
+      notificationObservers.append(NotificationCenter.default.addObserver(
         forName: name,
         object: nil,
         queue: nil
       ) { [weak self] notification in
         guard let item = notification.object as? AVPlayerItem else { return }
-        if name == AVPlayerItem.failedToPlayToEndTimeNotification {
-          let error = notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] ?? "unknown error"
-          Log.error(.capture, "DemoVideoSource: a video failed to play to its end: \(error)")
-        }
-        self?.videoDidEnd(item)
+        // Nil means the item played through. Extracted here: `Notification` is not Sendable.
+        let failureDescription: String? = name == AVPlayerItem.failedToPlayToEndTimeNotification
+          ? (notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? NSError)?.localizedDescription ?? "unknown error"
+          : nil
+        self?.videoDidEnd(item, failureDescription: failureDescription)
       })
     }
+
+    // The system pauses a player showing video when the app leaves the foreground and does not
+    // resume it; left alone, the frame thread would poll a paused player forever and the preview
+    // would freeze without a word.
+    notificationObservers.append(NotificationCenter.default.addObserver(
+      forName: UIApplication.didBecomeActiveNotification,
+      object: nil,
+      queue: nil
+    ) { [weak self] _ in
+      self?.resumePlaybackIfNeeded()
+    })
 
     // The highest rate among the videos, so a 60 fps recording is shown at 60 even when queued
     // behind a 30 fps one; a video with fewer frames than refreshes simply has no new frame to
@@ -209,6 +235,8 @@ public final class DemoVideoSource: @unchecked Sendable {
     player.play()
   }
 
+  /// Stops playback. Not a barrier: a frame already on its way through the handlers when this
+  /// returns may still be delivered.
   public func stop() {
     lock.lock()
     isRunning = false
@@ -217,15 +245,23 @@ public final class DemoVideoSource: @unchecked Sendable {
     let player = self.player
     self.player = nil
     queued.removeAll()
-    for observer in endObservers {
+    for observer in notificationObservers {
       NotificationCenter.default.removeObserver(observer)
     }
-    endObservers.removeAll()
+    notificationObservers.removeAll()
     lock.unlock()
 
     thread?.stop()
     player?.pause()
     player?.removeAllItems()
+  }
+
+  /// `play()` on a player already playing is a no-op, so this is safe to call blind.
+  private func resumePlaybackIfNeeded() {
+    lock.lock()
+    let player = isRunning ? self.player : nil
+    lock.unlock()
+    player?.play()
   }
 
   /// Appends the next video to the player. Called with the lock held.
@@ -246,18 +282,36 @@ public final class DemoVideoSource: @unchecked Sendable {
     ])
     item.add(output)
 
-    queued.append(QueuedVideo(item: item, output: output, renderSize: video.renderSize))
+    // An item that fails before it plays sends neither end notification, so the queue would stall
+    // with nothing said. Nothing here can advance past it safely; the least it can do is say so.
+    let url = video.url
+    let statusObservation = item.observe(\.status, options: [.new]) { item, _ in
+      guard item.status == .failed else { return }
+      Log.error(.capture, "DemoVideoSource: \(url.lastPathComponent) cannot be played: \(item.error?.localizedDescription ?? "no error given")")
+    }
+
+    queued.append(QueuedVideo(
+      item: item,
+      output: output,
+      renderSize: video.renderSize,
+      statusObservation: statusObservation
+    ))
     player.insert(item, after: nil)
   }
 
-  private func videoDidEnd(_ item: AVPlayerItem) {
+  private func videoDidEnd(_ item: AVPlayerItem, failureDescription: String?) {
     lock.lock()
-    defer { lock.unlock() }
     guard isRunning, let player, let index = queued.firstIndex(where: { $0.item === item }) else {
+      lock.unlock()
       return
     }
     queued.remove(at: index)
     enqueueNextVideo(into: player)
+    lock.unlock()
+
+    if let failureDescription {
+      Log.error(.capture, "DemoVideoSource: a video failed to play to its end: \(failureDescription)")
+    }
   }
 
   /// Publishes the frame that belongs to `hostTime`, if there is a new one. On the frame thread.
@@ -279,12 +333,22 @@ public final class DemoVideoSource: @unchecked Sendable {
       }
 
       lock.lock()
+      // Re-checked: `stop()` may have run since the snapshot above. A frame can still slip out
+      // between this unlock and `emit` — closing that would need the lock held across the bus,
+      // and a handler that reads `latestPixelBuffer` would then deadlock.
+      guard isRunning else {
+        lock.unlock()
+        return
+      }
       _latestPixelBuffer = pixelBuffer
       _naturalSize = video.renderSize
       lock.unlock()
 
       do {
-        let sampleBuffer = try CMSampleBuffer.wrapping(imageBuffer: pixelBuffer, presentationTime: itemTime)
+        // Host time, as a capture session would stamp it: `itemTime` restarts at zero on every
+        // loop and item change and can run negative for the item still waiting its turn.
+        let presentationTime = CMTime(seconds: hostTime, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+        let sampleBuffer = try CMSampleBuffer.wrapping(imageBuffer: pixelBuffer, presentationTime: presentationTime)
         output.emit(sampleBuffer: sampleBuffer)
       } catch {
         Log.error(.capture, "DemoVideoSource could not wrap a frame as a sample buffer: \(error)")
@@ -319,33 +383,52 @@ public final class DemoVideoSource: @unchecked Sendable {
       lock.unlock()
 
       let link = CADisplayLink(target: self, selector: #selector(displayLinkDidFire(_:)))
+      // `CAFrameRateRange` raises if `preferred` lies outside `[minimum, maximum]`, and a
+      // slow-motion recording's nominal rate exceeds the display's.
+      let minimumFrameRate: Float = 30
+      let maximumFrameRate: Float = 120
       link.preferredFrameRateRange = CAFrameRateRange(
-        minimum: 30,
-        maximum: 120,
-        preferred: max(30, preferredFrameRate)
+        minimum: minimumFrameRate,
+        maximum: maximumFrameRate,
+        preferred: min(maximumFrameRate, max(minimumFrameRate, preferredFrameRate))
       )
       link.add(to: .current, forMode: .default)
 
+      // A pool per pass: nothing else drains this thread's autoreleased objects before it exits.
       while !isCancelled {
-        RunLoop.current.run(mode: .default, before: .distantFuture)
+        let ranLoop = autoreleasepool {
+          RunLoop.current.run(mode: .default, before: .distantFuture)
+        }
+        guard ranLoop else {
+          Log.error(.capture, "DemoVideoSource frame thread's run loop has no sources; stopping")
+          break
+        }
       }
 
       link.invalidate()
     }
 
+    /// Asks the thread to finish. Not a barrier: a tick already in flight may still emit one
+    /// frame. Joining is not an option, because `DemoVideoSource.deinit` can run on this very
+    /// thread.
     func stop() {
       cancel()
       lock.lock()
       let runLoop = self.runLoop
       lock.unlock()
-      if let runLoop {
-        CFRunLoopStop(runLoop)
+      guard let runLoop else { return }
+      // `CFRunLoopStop` only takes effect while the loop is inside a run call, and the loop is
+      // between calls for a moment after every display-link fire. A queued block runs at the top
+      // of the next cycle whether or not the loop was parked, and the wake-up forces that cycle.
+      CFRunLoopPerformBlock(runLoop, CFRunLoopMode.defaultMode.rawValue) {
+        CFRunLoopStop(CFRunLoopGetCurrent())
       }
+      CFRunLoopWakeUp(runLoop)
     }
 
     @objc private func displayLinkDidFire(_ link: CADisplayLink) {
       guard !isCancelled else { return }
-      tick(link.targetTimestamp)
+      autoreleasepool { tick(link.targetTimestamp) }
     }
   }
 }

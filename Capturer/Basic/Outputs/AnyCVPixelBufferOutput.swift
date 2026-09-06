@@ -20,16 +20,17 @@ public class AnyCVPixelBufferOutput: PixelBufferOutputNodeType, @unchecked Senda
     self.upstream = upstream
 
     // Runs on the upstream's delivery thread, synchronously, like everything on a bus: the
-    // filter is applied and the result published before the next frame can arrive.
+    // filter is applied and the result published before the next frame can arrive. Nothing is
+    // done for a frame nobody would receive — the filter is the expensive part of this node.
     let pixelBufferBus = self.pixelBufferBus
     if filter is NoPixelBufferModifier {
       cancellable = upstream.sampleBufferBus.addHandler { buffer in
-        guard let pixelBuffer = buffer.takeCVPixelBuffer() else { return }
+        guard pixelBufferBus.hasTargets, let pixelBuffer = buffer.takeCVPixelBuffer() else { return }
         pixelBufferBus.emit(element: pixelBuffer)
       }
     } else {
       cancellable = upstream.sampleBufferBus.addHandler { buffer in
-        guard let pixelBuffer = buffer.takeCVPixelBuffer() else { return }
+        guard pixelBufferBus.hasTargets, let pixelBuffer = buffer.takeCVPixelBuffer() else { return }
         pixelBufferBus.emit(element: filter.perform(pixelBuffer: pixelBuffer))
       }
     }

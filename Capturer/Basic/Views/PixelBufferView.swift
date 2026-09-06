@@ -12,6 +12,8 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
   }
 
   private var subscription: EventBusCancellable?
+  /// The slot the current subscription hands frames through.
+  private var pendingFrame: LatestValueSlot<CVPixelBuffer>?
 
   public required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
@@ -36,6 +38,7 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
     // ever waiting for main — one that arrives before main has drawn the last replaces it —
     // so a busy main thread costs frames, never a queue of them.
     let pending = LatestValueSlot<CVPixelBuffer>()
+    pendingFrame = pending
     subscription = output
       .pixelBufferBus
       .addHandler { [weak self, pending] pixelBuffer in
@@ -43,7 +46,11 @@ public final class PixelBufferView: UIView, PixelBufferDisplaying {
         DispatchQueue.main.async {
           guard let pixelBuffer = pending.take() else { return }
           MainActor.assumeIsolated {
-            self?.input(pixelBuffer: pixelBuffer)
+            // A block queued by a subscription that has since been replaced finds a different
+            // slot and draws nothing, so re-attaching never paints one last frame from the
+            // previous output.
+            guard let self, self.pendingFrame === pending else { return }
+            self.input(pixelBuffer: pixelBuffer)
           }
         }
       }
