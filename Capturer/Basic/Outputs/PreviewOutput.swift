@@ -184,6 +184,34 @@ open class PreviewOutput: VideoDataOutput, @unchecked Sendable {
     }
   }
 
+  /// How far the buffers this output publishes still need turning to be upright on screen, in
+  /// degrees, or `nil` before the rotation coordinator has been installed.
+  ///
+  /// The coordinator's horizon-level angle is what the preview layer applies to look right. This
+  /// output asks its own connection to apply the same angle to the buffers it delivers, but a
+  /// connection is free to refuse (`isVideoRotationAngleSupported`), and on some devices it does —
+  /// the frames then arrive in the sensor's landscape orientation with the connection reporting
+  /// zero. Anything that stores or re-displays those frames outside the preview layer — a demo
+  /// recording, say — needs the *difference*, not either angle alone: stamping the coordinator's
+  /// angle onto frames the connection had already rotated would turn them twice.
+  public var rotationAngleForUprightFrames: CGFloat? {
+    let (coordinator, connection) = rotationLock.withLock {
+      (rotationCoordinator, rotationConnection)
+    }
+    guard let coordinator else { return nil }
+    return Self.rotationNeeded(
+      previewAngle: coordinator.videoRotationAngleForHorizonLevelPreview,
+      connectionAngle: connection?.videoRotationAngle ?? 0
+    )
+  }
+
+  /// The rotation left to apply once a connection has applied `connectionAngle` of the
+  /// `previewAngle` the horizon needs, normalised to `0..<360`.
+  static func rotationNeeded(previewAngle: CGFloat, connectionAngle: CGFloat) -> CGFloat {
+    let remainder = (previewAngle - connectionAngle).truncatingRemainder(dividingBy: 360)
+    return remainder < 0 ? remainder + 360 : remainder
+  }
+
   /// The connection the given generation is still allowed to drive, or `nil` once a newer
   /// reconfiguration has taken over.
   private func rotationConnection(matching generation: UInt64) -> AVCaptureConnection? {

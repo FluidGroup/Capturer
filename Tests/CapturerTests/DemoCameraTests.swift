@@ -295,6 +295,27 @@ final class DemoCameraTests: XCTestCase {
                     "the preview draws these as layer contents, which needs an IOSurface")
   }
 
+  // MARK: - Rotation still needed
+
+  /// The recorder must stamp only what the connection did *not* already apply. A device whose
+  /// data connection refuses rotation hands over sensor-landscape frames and reports zero; one
+  /// whose connection rotates them reports the full angle and the frames are already upright.
+  func testRotationNeededIsTheDifferenceBetweenHorizonAndConnection() {
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 90, connectionAngle: 0), 90,
+                   "connection refused rotation: the whole horizon angle is still owed")
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 90, connectionAngle: 90), 0,
+                   "connection already rotated the frames: nothing is owed, or they turn twice")
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 270, connectionAngle: 90), 180)
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 0, connectionAngle: 0), 0)
+  }
+
+  func testRotationNeededNormalisesBelowZeroAndAboveAFullTurn() {
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 0, connectionAngle: 90), 270,
+                   "a negative remainder wraps to the equivalent positive turn")
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 450, connectionAngle: 0), 90)
+    XCTAssertEqual(PreviewOutput.rotationNeeded(previewAngle: 360, connectionAngle: 0), 0)
+  }
+
   private func waitUntil(
     _ description: String,
     timeout: TimeInterval = 5,
